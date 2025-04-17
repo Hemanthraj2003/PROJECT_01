@@ -1,0 +1,9 @@
+/node_modules/
+
+.env
+.vscode/
+reference.txt
+
+# Ignore uploaded files
+/uploads/*
+!uploads/.gitkeep

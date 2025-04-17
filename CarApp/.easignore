@@ -1,0 +1,67 @@
+# Development files and folders
+.git/
+.gitignore
+.idea/
+.vscode/
+*.log
+.expo/
+.expo-shared/
+.DS_Store
+
+# Build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+
+# Node modules and cache
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.yarn/
+.npm/
+
+# Test and documentation
+__tests__/
+*.test.js
+*.test.tsx
+docs/
+*.md
+!app.json
+!eas.json
+
+# Development configurations
+.env
+.env.development
+.env.local
+.env.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# IDE and editor files
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*~
+
+# Unnecessary assets
+assets/raw/
+assets/**/*.psd
+assets/**/*.ai
+assets/**/*.sketch
+assets/images/*.svg
+
+# Platform specific
+ios/
+web/
+*.iml

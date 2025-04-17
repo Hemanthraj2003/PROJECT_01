@@ -1,0 +1,6 @@
+[2025-03-25T05:59:12.627Z]  [error]  Error: Expected ',' or ']' after array element in JSON at position 98 occurred at 2025-03-25T05:59:12.627Z. Request Method: POST, Request URL: /cars/    [+18ms]
+[2025-03-25T05:59:34.666Z]  [error]  Error: Unexpected token ']', ...",
+    
+  ]
+}
+" is not valid JSON occurred at 2025-03-25T05:59:34.666Z. Request Method: POST, Request URL: /cars/    [+1ms]
