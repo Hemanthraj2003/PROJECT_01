@@ -139,6 +139,37 @@ const checkUserExists = async (req, res) => {
   }
 };
 
+// function to get a user by ID
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userDoc = await db.collection("USERS").doc(id).get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const userData = {
+      id: userDoc.id,
+      ...userDoc.data(),
+    };
+
+    res.status(200).json({
+      success: true,
+      data: userData,
+    });
+  } catch (error) {
+    console.error("Error getting user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 ///////////////////////////////////
 // START OF CARS RELATED FUNCTIONS
 ///////////////////////////////////
@@ -294,6 +325,111 @@ const postCarForApproval = async (req, res) => {
   }
 };
 
+// function to get a single car by ID
+const getCarById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const carDoc = await db.collection("CARS").doc(id).get();
+
+    if (!carDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Car not found",
+      });
+    }
+
+    const carData = {
+      id: carDoc.id,
+      ...carDoc.data(),
+    };
+
+    res.status(200).json({
+      success: true,
+      data: carData,
+    });
+  } catch (error) {
+    console.error("Error getting car:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// function to update car status
+const updateCarStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate status
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid status value. Must be 'pending', 'approved', or 'rejected'",
+      });
+    }
+
+    const carDoc = await db.collection("CARS").doc(id).get();
+
+    if (!carDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Car not found",
+      });
+    }
+
+    // Update the car status
+    await db.collection("CARS").doc(id).update({
+      carStatus: status,
+    });
+
+    // If status is changing to approved or rejected, update user's car arrays
+    const carData = carDoc.data();
+    const postedBy = carData.postedBy;
+    const userRef = db.collection("USERS").doc(postedBy);
+
+    if (status === "approved" || status === "rejected") {
+      await db.runTransaction(async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists) {
+          throw new Error("User not found");
+        }
+
+        const userData = userDoc.data();
+        // Remove from onSaleCars
+        const updatedOnSaleCars = userData.onSaleCars.filter(
+          (carId) => carId !== id
+        );
+
+        // Update relevant arrays based on status
+        if (status === "approved") {
+          transaction.update(userRef, {
+            onSaleCars: updatedOnSaleCars,
+            soldCars: admin.firestore.FieldValue.arrayUnion(id),
+          });
+        } else {
+          transaction.update(userRef, {
+            onSaleCars: updatedOnSaleCars,
+          });
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Car status updated to ${status}`,
+    });
+  } catch (error) {
+    console.error("Error updating car status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getAllCars,
@@ -305,4 +441,7 @@ module.exports = {
   checkUserExists,
   getFilteredCars,
   generateOtp,
+  getCarById,
+  updateCarStatus,
+  getUserById,
 };

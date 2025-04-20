@@ -2,20 +2,17 @@ const express = require("express");
 const {
   getAllUsers,
   registerUsers,
-  checkUserExists,
   updateProfile,
-  generateOtp,
+  checkUserExists,
+  getUserById,
 } = require("../services/dboperations");
+
 const router = express.Router();
 
-// dummy structe of how the data will be ...
-
-// handles route  /users/ ...
 router.get("/", getAllUsers);
+router.get("/:id", getUserById);
 router.post("/signup", registerUsers);
-router.post("/otp", generateOtp);
-
+router.put("/update", updateProfile);
 router.get("/isExists", checkUserExists);
-router.post("/update", updateProfile);
 
 module.exports = router;
