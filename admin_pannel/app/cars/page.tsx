@@ -13,33 +13,20 @@ import {
   MenuItem,
   FormControl,
   Select,
-  Box,
+  TablePagination,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useLoading } from "../context/loadingContext";
-
-interface CarData {
-  id: string;
-  carBrand: string;
-  carModel: string;
-  modelYear: number;
-  fuelType: string;
-  transmissionType: string;
-  carStatus: string;
-  location: string;
-  exceptedPrice: number;
-  images: string[];
-  km: number;
-  ownerName: string;
-  description: string;
-  postedDate: string;
-}
+import { carService, type CarData } from "../services/carService";
 
 export default function Cars() {
   const router = useRouter();
   const [cars, setCars] = useState<CarData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { showLoading, hideLoading } = useLoading();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({
     brand: "",
     model: "",
@@ -47,28 +34,41 @@ export default function Cars() {
     fuelType: "",
     status: "",
   });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   // Hardcoded options for now - these could come from an API
   const fuelTypes = ["Petrol", "Diesel", "CNG", "EV", "Hybrid"];
-  const statuses = ["pending", "approved", "rejected"];
+  const statuses = ["pending", "approved", "rejected", "sold"];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [filters]);
 
   useEffect(() => {
     fetchCars();
-  }, []);
+  }, [page, rowsPerPage, debouncedFilters]);
 
   const fetchCars = async () => {
     try {
       showLoading("Loading cars...");
-      const response = await fetch("http://localhost:5000/cars");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch cars: ${response.statusText}`);
-      }
-      const data = await response.json();
-      if (data.success) {
-        setCars(data.data);
-      } else {
-        throw new Error(data.message || "Failed to fetch cars");
-      }
+      const activeFilters: Record<string, string> = {};
+      Object.entries(debouncedFilters).forEach(([key, value]) => {
+        if (value) {
+          activeFilters[key] = value;
+        }
+      });
+
+      const result = await carService.getCars(
+        page + 1,
+        rowsPerPage,
+        activeFilters
+      );
+      setCars(result.data);
+      setTotal(result.total);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "An unknown error occurred"
@@ -84,24 +84,26 @@ export default function Cars() {
       ...prev,
       [field]: value,
     }));
+    setPage(0); // Reset to first page when filters change
+  };
+
+  const handleChangePage = async (_: unknown, newPage: number) => {
+    showLoading("Loading page...");
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    showLoading("Loading page...");
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleViewDetails = (carId: string) => {
     showLoading("Loading car details...");
     router.push(`/application/${carId}`);
   };
-
-  const filteredCars = cars.filter((car) => {
-    return (
-      (!filters.brand ||
-        car.carBrand.toLowerCase().includes(filters.brand.toLowerCase())) &&
-      (!filters.model ||
-        car.carModel.toLowerCase().includes(filters.model.toLowerCase())) &&
-      (!filters.year || car.modelYear.toString() === filters.year) &&
-      (!filters.fuelType || car.fuelType === filters.fuelType) &&
-      (!filters.status || car.carStatus === filters.status)
-    );
-  });
 
   return (
     <div className="p-6">
@@ -179,14 +181,14 @@ export default function Cars() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCars.length === 0 ? (
+            {cars.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center">
                   No cars found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredCars.map((car) => (
+              cars.map((car) => (
                 <TableRow key={car.id}>
                   <TableCell>{car.carBrand}</TableCell>
                   <TableCell>{car.carModel}</TableCell>
@@ -200,6 +202,8 @@ export default function Cars() {
                           ? "bg-green-100 text-green-800"
                           : car.carStatus === "rejected"
                           ? "bg-red-100 text-red-800"
+                          : car.carStatus === "sold"
+                          ? "bg-blue-100 text-blue-800"
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
@@ -222,6 +226,26 @@ export default function Cars() {
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          labelRowsPerPage="Cars per page"
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`
+          }
+          SelectProps={{
+            inputProps: { "aria-label": "cars per page" },
+            native: true,
+          }}
+          showFirstButton
+          showLastButton
+          disabled={cars.length === 0}
+        />
       </TableContainer>
     </div>
   );

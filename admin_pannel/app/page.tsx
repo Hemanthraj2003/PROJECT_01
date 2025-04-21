@@ -30,6 +30,7 @@ interface DashboardStats {
   pendingApprovals: number;
   approvedCars: number;
   rejectedCars: number;
+  soldCars: number;
 }
 
 interface RecentActivity {
@@ -50,6 +51,7 @@ export default function Dashboard() {
     pendingApprovals: 0,
     approvedCars: 0,
     rejectedCars: 0,
+    soldCars: 0,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,17 +62,19 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch cars data
-      const carsResponse = await fetch("http://localhost:5000/cars");
-      const carsData = await carsResponse.json();
-      const cars = carsData.data || [];
+      const [carsResponse, usersResponse] = await Promise.all([
+        fetch("http://localhost:5000/cars"),
+        fetch("http://localhost:5000/users"),
+      ]);
 
-      // Fetch users data
-      const usersResponse = await fetch("http://localhost:5000/users");
-      const usersData = await usersResponse.json();
-      const users = usersData.data || [];
+      const [carsData, usersData] = await Promise.all([
+        carsResponse.json(),
+        usersResponse.json(),
+      ]);
 
-      // Calculate stats
+      const cars = carsData.success ? carsData.data : [];
+      const users = usersData.success ? usersData.data : [];
+
       const statsData = {
         totalCars: cars.length,
         totalUsers: users.length,
@@ -80,6 +84,7 @@ export default function Dashboard() {
           .length,
         rejectedCars: cars.filter((car: any) => car.carStatus === "rejected")
           .length,
+        soldCars: cars.filter((car: any) => car.carStatus === "sold").length,
       };
 
       // Get recent activity (last 10 cars)
@@ -192,6 +197,19 @@ export default function Dashboard() {
               </div>
               <Typography variant="h4" component="h2" className="mt-2">
                 {stats.rejectedCars}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <Card className="bg-purple-50">
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <DirectionsCar className="text-purple-600" />
+                <Typography color="textSecondary">Sold</Typography>
+              </div>
+              <Typography variant="h4" component="h2" className="mt-2">
+                {stats.soldCars}
               </Typography>
             </CardContent>
           </Card>

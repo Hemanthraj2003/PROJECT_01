@@ -79,10 +79,18 @@ export default function CarDetails() {
     }
   };
 
-  const updateCarStatus = async (newStatus: "approved" | "rejected") => {
+  const updateCarStatus = async (
+    newStatus: "approved" | "rejected" | "sold"
+  ) => {
     try {
       showLoading(
-        `${newStatus === "approved" ? "Approving" : "Rejecting"} car...`
+        `${
+          newStatus === "approved"
+            ? "Approving"
+            : newStatus === "rejected"
+            ? "Rejecting"
+            : "Marking as sold"
+        } car...`
       );
       const response = await fetch(`http://localhost:5000/cars/${id}/status`, {
         method: "PUT",
@@ -130,7 +138,9 @@ export default function CarDetails() {
               variant="contained"
               color="success"
               onClick={() => updateCarStatus("approved")}
-              disabled={car.carStatus === "approved"}
+              disabled={
+                car.carStatus === "approved" || car.carStatus === "sold"
+              }
             >
               Approve
             </Button>
@@ -138,9 +148,21 @@ export default function CarDetails() {
               variant="contained"
               color="error"
               onClick={() => updateCarStatus("rejected")}
-              disabled={car.carStatus === "rejected"}
+              disabled={
+                car.carStatus === "rejected" || car.carStatus === "sold"
+              }
             >
               Reject
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => updateCarStatus("sold")}
+              disabled={
+                car.carStatus === "sold" || car.carStatus === "rejected"
+              }
+            >
+              Mark as Sold
             </Button>
           </div>
         </div>
@@ -153,6 +175,8 @@ export default function CarDetails() {
                 ? "bg-green-100 text-green-800"
                 : car.carStatus === "rejected"
                 ? "bg-red-100 text-red-800"
+                : car.carStatus === "sold"
+                ? "bg-blue-100 text-blue-800"
                 : "bg-yellow-100 text-yellow-800"
             }`}
           >

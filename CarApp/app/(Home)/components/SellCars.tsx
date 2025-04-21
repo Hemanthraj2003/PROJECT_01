@@ -186,6 +186,8 @@ export default function SellCars() {
         const storedData = await AsyncStorage.getItem("userDetails");
         if (storedData != null) {
           const data = JSON.parse(storedData);
+          console.log(response);
+
           data.onSaleCars.push(response.carId);
           await AsyncStorage.setItem("userDetails", JSON.stringify(data));
           setUser(JSON.stringify(data));

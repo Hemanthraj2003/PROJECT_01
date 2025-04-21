@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById } from "../Services/backendoperations";
+import { useLoading } from "@/app/context/loadingContext";
 
 export default function MyCars() {
   const [value, setValue] = useState("onSale");
@@ -10,17 +11,25 @@ export default function MyCars() {
   const [bought, setBought] = useState<any>([]);
   const [sold, setSold] = useState<any>([]);
   const { user } = useAuth();
+  const { showLoading, hideLoading } = useLoading();
 
   useEffect(() => {
     const fetchCarDetails = async () => {
-      const onSaleCars = await fetchCarsById(user?.onSaleCars);
-      if (onSaleCars) setOnSale(onSaleCars);
+      try {
+        showLoading();
+        const onSaleCars = await fetchCarsById(user?.onSaleCars);
+        if (onSaleCars) setOnSale(onSaleCars);
 
-      const boughtCars = await fetchCarsById(user?.boughtCars);
-      if (boughtCars) setBought(boughtCars);
+        const boughtCars = await fetchCarsById(user?.boughtCars);
+        if (boughtCars) setBought(boughtCars);
 
-      const soldCars = await fetchCarsById(user?.soldCars);
-      if (soldCars) setSold(soldCars);
+        const soldCars = await fetchCarsById(user?.soldCars);
+        if (soldCars) setSold(soldCars);
+      } catch (error) {
+        console.error("Error fetching car details:", error);
+      } finally {
+        hideLoading();
+      }
     };
     fetchCarDetails();
   }, []);

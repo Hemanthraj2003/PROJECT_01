@@ -8,9 +8,12 @@ import {
   Dimensions,
   FlatList,
   TouchableOpacity,
+  ViewStyle,
+  TextStyle,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import Feather from "@expo/vector-icons/Feather";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import SellCarsImageCard from "./SellCarsImageCard";
 import Navbar from "./Navbar";
@@ -39,6 +42,12 @@ type Car = {
   description: string;
 };
 
+interface Styles {
+  container: ViewStyle;
+  greytext: TextStyle;
+  overviewBlocks: ViewStyle;
+}
+
 export default function BuyCarPage() {
   const params = useLocalSearchParams();
   const [liked, setLiked] = useState<boolean>(false);
@@ -46,19 +55,17 @@ export default function BuyCarPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
 
-  const car: Car =
-    typeof params.data === "string" ? JSON.parse(params.data) : null;
-  // console.log(car);
+  const car: Car | null = params.data
+    ? JSON.parse(params.data as string)
+    : null;
+
   useEffect(() => {
     if (car && user) {
       const isLiked = user?.likedCars?.some((likedCar) => likedCar === car.id);
-      // console.log(user.likedCars, car.id);
-
       setLiked(isLiked);
     }
   }, []);
 
-  // event handler for the carousel scroll
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(
       event.nativeEvent.contentOffset.x / Dimensions.get("screen").width
@@ -67,13 +74,12 @@ export default function BuyCarPage() {
   };
 
   const toggleLikedCars = async () => {
-    // needs loading
     if (!user || !car) return;
     setLiked((liked) => {
       let userData = user;
       const updatedLikedList = liked
         ? user?.likedCars.filter((carId) => carId !== car.id)
-        : [...user.likedCars, car.id];
+        : [...(user.likedCars || []), car.id];
       userData.likedCars = updatedLikedList;
       const updateBackend = async () => {
         const updatedData = await updateUserData(userData);
@@ -81,11 +87,17 @@ export default function BuyCarPage() {
       };
 
       updateBackend();
-      console.log(user);
-
       return !liked;
     });
   };
+
+  if (!car) {
+    return (
+      <View style={styles.container}>
+        <Text>Car details not found</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -105,10 +117,10 @@ export default function BuyCarPage() {
           }}
         >
           <FlatList
-            data={car.images} // Use car images here
-            renderItem={({ item, index }) => {
-              return <SellCarsImageCard index={index} item={{ Title: item }} />;
-            }}
+            data={car.images || []}
+            renderItem={({ item, index }) => (
+              <SellCarsImageCard index={index} item={{ Title: item }} />
+            )}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -127,26 +139,24 @@ export default function BuyCarPage() {
             gap: 5,
           }}
         >
-          {car.images.map((_, index) => {
-            return (
-              <View
-                key={index}
-                style={[
-                  {
-                    backgroundColor: "grey",
-                    borderRadius: "50%",
-                    width: 10,
-                    height: 10,
-                  },
-                  currentIndex === index && {
-                    backgroundColor: colorThemes.primary2,
-                    width: 12,
-                    height: 12,
-                  },
-                ]}
-              />
-            );
-          })}
+          {(car.images || []).map((_, index) => (
+            <View
+              key={index}
+              style={[
+                {
+                  backgroundColor: "grey",
+                  borderRadius: "50%",
+                  width: 10,
+                  height: 10,
+                },
+                currentIndex === index && {
+                  backgroundColor: colorThemes.primary2,
+                  width: 12,
+                  height: 12,
+                },
+              ]}
+            />
+          ))}
         </View>
 
         {/* Car details */}
@@ -194,7 +204,6 @@ export default function BuyCarPage() {
               <Text
                 style={{
                   color: "#5c5c5c",
-                  // marginLeft: 5,
                   minWidth: 60,
                   textAlign: "center",
                 }}
@@ -209,7 +218,6 @@ export default function BuyCarPage() {
               <Text
                 style={{
                   color: "#5c5c5c",
-                  // marginLeft: 5,
                   minWidth: 60,
                   textAlign: "center",
                 }}
@@ -224,7 +232,6 @@ export default function BuyCarPage() {
               <Text
                 style={{
                   color: "#5c5c5c",
-                  // marginLeft: 5,
                   minWidth: 60,
                   textAlign: "center",
                 }}
@@ -359,11 +366,15 @@ export default function BuyCarPage() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<Styles>({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   greytext: {
     color: "#5c5c5c",
   },
-
   overviewBlocks: {
     flexDirection: "row",
     alignItems: "center",

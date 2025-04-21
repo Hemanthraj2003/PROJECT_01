@@ -4,21 +4,30 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  TextInput,
 } from "react-native";
-import React, { useEffect, useState } from "react";
-import { Card, Modal, Portal, Searchbar } from "react-native-paper";
+import React, { useEffect, useState, useCallback } from "react";
+import { Card, Modal, Portal } from "react-native-paper";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import {
-  fetchAllCars,
-  fetchAllFilteredCars,
-} from "../Services/backendoperations";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { fetchAllFilteredCars } from "../Services/backendoperations";
+import colorThemes from "@/app/theme";
+import { useLoading } from "@/app/context/loadingContext";
 
 export default function BuyCars() {
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [cars, setCars] = useState<any[]>([]);
   const [applyEnabled, setApplyEnabled] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState<any[]>([]);
   const router = useRouter();
+  const { showLoading, hideLoading } = useLoading();
 
   // dumbway of creating the filter paramters
 
@@ -43,9 +52,12 @@ export default function BuyCars() {
   const [tr1, settr1] = useState<boolean>(false);
   const [tr2, settr2] = useState<boolean>(false);
 
-  // this use effect is to set the availability of apply button
   useEffect(() => {
-    if (
+    getData();
+  }, []);
+
+  useEffect(() => {
+    const hasActiveFilters =
       pr1 ||
       pr2 ||
       pr3 ||
@@ -58,29 +70,77 @@ export default function BuyCars() {
       mr2 ||
       mr3 ||
       tr1 ||
-      tr2
-    ) {
-      setApplyEnabled(true);
-    } else {
-      setApplyEnabled(false);
-    }
+      tr2;
+
+    setApplyEnabled(hasActiveFilters);
   }, [pr1, pr2, pr3, ft1, ft2, ft3, ft4, ft5, mr1, mr2, mr3, tr1, tr2]);
 
-  useEffect(() => {
-    const getData = async () => {
-      console.log("fetching data...");
+  const getData = async (reset = false) => {
+    if (loading || (!hasMore && !reset)) return;
 
-      const data = await fetchAllCars();
-      console.log(data);
+    try {
+      setLoading(true);
+      showLoading();
+      const pageToFetch = reset ? 1 : currentPage;
 
-      setCars(data);
-    };
-    getData();
+      const { cars: newCars, pagination } = await fetchAllFilteredCars(
+        activeFilters,
+        searchTerm,
+        pageToFetch
+      );
+
+      if (reset) {
+        setCars(newCars);
+      } else {
+        setCars((prev) => [...prev, ...newCars]);
+      }
+
+      setHasMore(pagination.hasMore);
+      setCurrentPage(pageToFetch + 1);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+      hideLoading();
+    }
+  };
+
+  const handleSearch = async (text: string) => {
+    setSearchTerm(text);
+    setCurrentPage(1);
+    setHasMore(true);
+
+    try {
+      setLoading(true);
+      showLoading();
+      const { cars: searchResults, pagination } = await fetchAllFilteredCars(
+        activeFilters,
+        text,
+        1
+      );
+      setCars(searchResults);
+      setHasMore(pagination.hasMore);
+      setCurrentPage(2);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+      hideLoading();
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setSearchTerm("");
+    setActiveFilters([]);
+    clearFilterParams();
+    try {
+      await getData(true);
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
-  const toggleVisibility = () => {
-    setShowFilter(!showFilter);
-  };
   const clearFilterParams = () => {
     setpr1(false);
     setpr2(false);
@@ -98,38 +158,24 @@ export default function BuyCars() {
   };
 
   const onFilterSubmit = async () => {
-    const postBody = [];
+    const filterParams = [];
 
-    // ===== PRICE RANGE =====
+    // Price Range filters
     const priceConditions = [];
     if (pr1) priceConditions.push([100000, 300000]);
     if (pr2) priceConditions.push([300000, 600000]);
     if (pr3) priceConditions.push([600000, Number.MAX_SAFE_INTEGER]);
 
-    if (priceConditions.length === 1) {
-      postBody.push(
-        {
-          field: "exceptedPrice",
-          condition: ">=",
-          value: priceConditions[0][0],
-        },
-        {
-          field: "exceptedPrice",
-          condition: "<=",
-          value: priceConditions[0][1],
-        }
-      );
-    } else if (priceConditions.length > 1) {
-      // Take overall min and max (broad match)
+    if (priceConditions.length > 0) {
       const min = Math.min(...priceConditions.map((p) => p[0]));
       const max = Math.max(...priceConditions.map((p) => p[1]));
-      postBody.push(
+      filterParams.push(
         { field: "exceptedPrice", condition: ">=", value: min },
         { field: "exceptedPrice", condition: "<=", value: max }
       );
     }
 
-    // ===== FUEL TYPE =====
+    // Fuel Type filters
     const fuelTypes = [];
     if (ft1) fuelTypes.push("Petrol");
     if (ft2) fuelTypes.push("Diesel");
@@ -137,64 +183,78 @@ export default function BuyCars() {
     if (ft4) fuelTypes.push("EV");
     if (ft5) fuelTypes.push("Hybrid");
 
-    if (fuelTypes.length === 1) {
-      postBody.push({
+    if (fuelTypes.length > 0) {
+      filterParams.push({
         field: "fuelType",
-        condition: "==",
-        value: fuelTypes[0],
+        condition: fuelTypes.length === 1 ? "==" : "in",
+        value: fuelTypes.length === 1 ? fuelTypes[0] : fuelTypes,
       });
-    } else if (fuelTypes.length > 1) {
-      postBody.push({ field: "fuelType", condition: "in", value: fuelTypes });
     }
 
-    // ===== MILEAGE (km) =====
+    // Mileage Range filters
     const kmConditions = [];
     if (mr1) kmConditions.push({ condition: "<=", value: 50000 });
     if (mr2) kmConditions.push({ condition: "<=", value: 100000 });
     if (mr3) kmConditions.push({ condition: ">=", value: 100000 });
 
-    if (kmConditions.length === 1) {
-      postBody.push({ field: "km", ...kmConditions[0] });
-    } else if (kmConditions.length > 1) {
-      // Take the broadest possible range
+    if (kmConditions.length > 0) {
       const min = kmConditions.find((c) => c.condition === ">=")?.value ?? 0;
       const max = kmConditions
         .filter((c) => c.condition === "<=")
         .reduce((a, b) => Math.max(a, b.value), Number.MAX_SAFE_INTEGER);
-      postBody.push({ field: "km", condition: ">=", value: min });
-      postBody.push({ field: "km", condition: "<=", value: max });
+
+      filterParams.push(
+        { field: "km", condition: ">=", value: min },
+        { field: "km", condition: "<=", value: max }
+      );
     }
 
-    // ===== TRANSMISSION TYPE =====
+    // Transmission Type filters
     const transmissionTypes = [];
     if (tr1) transmissionTypes.push("Manual");
     if (tr2) transmissionTypes.push("Automatic");
 
-    if (transmissionTypes.length === 1) {
-      postBody.push({
+    if (transmissionTypes.length > 0) {
+      filterParams.push({
         field: "transmissionType",
-        condition: "==",
-        value: transmissionTypes[0],
-      });
-    } else if (transmissionTypes.length > 1) {
-      postBody.push({
-        field: "transmissionType",
-        condition: "in",
-        value: transmissionTypes,
+        condition: transmissionTypes.length === 1 ? "==" : "in",
+        value:
+          transmissionTypes.length === 1
+            ? transmissionTypes[0]
+            : transmissionTypes,
       });
     }
 
-    console.log(postBody);
-
-    const result = await fetchAllFilteredCars(postBody);
-    if (result) {
-      setCars(result);
-    } else {
-      alert("No matching cars found");
+    try {
+      setLoading(true);
+      showLoading();
+      setActiveFilters(filterParams);
+      const { cars: filteredCars, pagination } = await fetchAllFilteredCars(
+        filterParams,
+        searchTerm,
+        1
+      );
+      setCars(filteredCars);
+      setCurrentPage(2);
+      setHasMore(pagination.hasMore);
+    } catch (error) {
+      console.error(error);
+      alert("Error applying filters");
+    } finally {
+      setLoading(false);
+      hideLoading();
+      setShowFilter(false);
     }
+  };
 
-    setShowFilter(false);
-    clearFilterParams();
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      getData();
+    }
+  };
+
+  const toggleVisibility = () => {
+    setShowFilter(!showFilter);
   };
 
   return (
@@ -208,7 +268,20 @@ export default function BuyCars() {
           style={{ alignItems: "center", flex: 1 }}
         >
           <View style={filterModal.modalView}>
-            <Text style={filterModal.modalTitle}>Filter</Text>
+            <View style={filterModal.headerContainer}>
+              <View>
+                <Text style={filterModal.modalTitle}>Filter</Text>
+              </View>
+              <View
+                style={{
+                  paddingHorizontal: 25,
+                }}
+              >
+                <TouchableOpacity onPress={() => setShowFilter(false)}>
+                  <Text style={filterModal.closeX}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
             {/* ///////// BODY //////////// */}
             <View style={filterModal.body}>
               {/* ///////////// PRICE RANGE ///////////////// */}
@@ -423,98 +496,148 @@ export default function BuyCars() {
             </View>
 
             {/* //////// BUTTONS ////////// */}
-            <View style={filterModal.buttons}>
-              <TouchableOpacity onPress={() => onFilterSubmit()}>
-                <View
-                  style={[
-                    filterModal.applyButton,
-                    { backgroundColor: applyEnabled ? "#117cd9" : "#ccc" },
-                  ]}
+            <View style={filterModal.buttonsContainer}>
+              <View style={filterModal.bottomButtons}>
+                <TouchableOpacity
+                  onPress={() => {
+                    clearFilterParams();
+                    getData(true);
+                  }}
                 >
-                  <Text style={{ color: "white", fontWeight: 900 }}>APPLY</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowFilter(false)}>
-                <View style={filterModal.closeButton}>
-                  <Text style={{ fontWeight: 900 }}>CLOSE</Text>
-                </View>
-              </TouchableOpacity>
+                  <View style={filterModal.resetButton}>
+                    <Text style={{ fontWeight: "700" }}>RESET</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={onFilterSubmit}
+                  disabled={!applyEnabled}
+                >
+                  <View
+                    style={[
+                      filterModal.applyButton,
+                      { backgroundColor: applyEnabled ? "#117cd9" : "#ccc" },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontWeight: "900",
+                        fontSize: 16,
+                      }}
+                    >
+                      APPLY
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
       </Portal>
 
-      <>
-        <TouchableOpacity onPress={toggleVisibility}>
-          <View
-            style={{
-              flexDirection: "row",
-              paddingVertical: 5,
-              paddingHorizontal: 15,
-              alignItems: "center",
-              gap: 12,
-              // borderColor: "black",
-              borderWidth: 0.2,
-              borderColor: "black",
-              borderRadius: 10,
-              marginBottom: 10,
-            }}
-          >
-            <Ionicons name="search" size={28} />
-            <Text> Search</Text>
-          </View>
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Ionicons name="search" size={20} color="#666" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search cars..."
+            value={searchTerm}
+            onChangeText={handleSearch}
+            onSubmitEditing={() => handleSearch(searchTerm)}
+            returnKeyType="search"
+          />
+          {searchTerm ? (
+            <TouchableOpacity onPress={() => handleSearch("")}>
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            activeFilters.length > 0 && styles.activeFilterButton,
+          ]}
+          onPress={() => setShowFilter(true)}
+        >
+          <Ionicons
+            name="filter"
+            size={24}
+            color={activeFilters.length > 0 ? "#fff" : "#666"}
+          />
         </TouchableOpacity>
-        {cars.length === 0 ? (
-          <View style={styles.noCarsContainer}>
-            <Text style={styles.noCarsText}>No matching cars found</Text>
-          </View>
-        ) : (
-          <ScrollView>
-            {cars.map((car, index) => (
-              <Card key={index} style={styles.cardStyles}>
-                <Card
-                  onPress={() => {
-                    router.push({
-                      pathname: "/components/BuyCarPage",
-                      params: {
-                        data: JSON.stringify(car),
-                      },
-                    });
-                  }}
-                >
-                  <View style={{ position: "relative" }}>
-                    <Card.Cover
-                      source={{
-                        uri: "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
-                      }}
-                    />
-                    <View style={styles.viewTextContainer}>
-                      <Text style={styles.viewText}>View</Text>
-                    </View>
-                  </View>
-                </Card>
+      </View>
 
-                <Card.Content style={{ paddingVertical: 12 }}>
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
+      {cars.length === 0 ? (
+        <View style={styles.noCarsContainer}>
+          <Text style={styles.noCarsText}>No matching cars found</Text>
+        </View>
+      ) : (
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } =
+              nativeEvent;
+            const paddingToBottom = 20;
+            if (
+              layoutMeasurement.height + contentOffset.y >=
+              contentSize.height - paddingToBottom
+            ) {
+              handleLoadMore();
+            }
+          }}
+          scrollEventThrottle={400}
+        >
+          {cars.map((car, index) => (
+            <Card key={index} style={styles.cardStyles}>
+              <Card
+                onPress={() => {
+                  router.push({
+                    pathname: "/components/BuyCarPage",
+                    params: {
+                      data: JSON.stringify(car),
+                    },
+                  });
+                }}
+              >
+                <View style={{ position: "relative" }}>
+                  <Card.Cover
+                    source={{
+                      uri: "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
+                    }}
+                  />
+                  <View style={styles.viewTextContainer}>
+                    <Text style={styles.viewText}>View</Text>
                   </View>
-                  <Text style={{ fontSize: 12 }}>
-                    {car.modelYear} {car.carBrand} {car.carModel}
-                  </Text>
-                  <View style={styles.carDetailsContainer}>
-                    <View style={styles.carDetailBox}>
-                      <Text style={styles.carDetailText}>{car.km} Km</Text>
-                    </View>
-                    <View style={styles.carDetailBox}>
-                      <Text style={styles.carDetailText}>{car.fuelType}</Text>
-                    </View>
-                  </View>
-                </Card.Content>
+                </View>
               </Card>
-            ))}
-          </ScrollView>
-        )}
-      </>
+
+              <Card.Content style={{ paddingVertical: 12 }}>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
+                </View>
+                <Text style={{ fontSize: 12 }}>
+                  {car.modelYear} {car.carBrand} {car.carModel}
+                </Text>
+                <View style={styles.carDetailsContainer}>
+                  <View style={styles.carDetailBox}>
+                    <Text style={styles.carDetailText}>{car.km} Km</Text>
+                  </View>
+                  <View style={styles.carDetailBox}>
+                    <Text style={styles.carDetailText}>{car.fuelType}</Text>
+                  </View>
+                </View>
+              </Card.Content>
+            </Card>
+          ))}
+          {loading && (
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <ActivityIndicator size="large" />
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -576,6 +699,39 @@ const styles = StyleSheet.create({
     color: "white",
     paddingHorizontal: 5,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 1.5,
+    borderWidth: 0.2,
+    borderColor: "black",
+    borderRadius: 10,
+    backgroundColor: "white",
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  filterButton: {
+    padding: 8,
+    borderWidth: 0.2,
+    borderColor: "black",
+    borderRadius: 10,
+    backgroundColor: "white",
+  },
+  activeFilterButton: {
+    backgroundColor: colorThemes.primary2,
+    borderColor: colorThemes.primary2,
+  },
 });
 
 const filterModal = StyleSheet.create({
@@ -586,13 +742,28 @@ const filterModal = StyleSheet.create({
     height: "85%",
     justifyContent: "space-between",
   },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 1,
+    paddingVertical: 5,
+  },
   modalTitle: {
     fontWeight: "900",
-    textAlign: "center",
     fontSize: 24,
     color: "#616161",
+    flex: 1,
+    textAlign: "center",
+    marginStart: 10,
+    alignItems: "center",
   },
-
+  closeX: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#616161",
+    // padding: 8, // Larger touch target
+  },
   filterHeadings: {
     fontWeight: "700",
     fontSize: 16,
@@ -625,28 +796,34 @@ const filterModal = StyleSheet.create({
     marginVertical: 5,
   },
 
-  buttons: {
+  buttonsContainer: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
+
+  bottomButtons: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
+    marginTop: 10,
+    gap: 5,
+    paddingHorizontal: 10,
   },
 
   applyButton: {
     padding: 10,
-
     borderRadius: 5,
-    // backgroundColor:  applyEnabled ? "#117cd9" : "#ccc",,
-    width: 80,
+    width: 100,
     alignItems: "center",
     justifyContent: "center",
   },
-  closeButton: {
+  resetButton: {
     padding: 10,
     borderRadius: 5,
     borderColor: "black",
     borderWidth: 0.2,
-    width: 80,
-
+    width: 100,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#f0f0f0",
   },
 });

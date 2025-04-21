@@ -1,12 +1,5 @@
 # 🚗 Car Dealership Project TODO List
 
-## 🎛 Admin Panel Enhancements
-
-- [ ] Add "Sold Cars" section
-  - [ ] Create new table component for sold cars
-  - [ ] Add filtering and sorting capabilities
-  - [ ] Implement statistics tracking for sold vehicles
-  - [ ] Add detailed view for each sold car
 
 ## 🔍 Search & Loading Features
 

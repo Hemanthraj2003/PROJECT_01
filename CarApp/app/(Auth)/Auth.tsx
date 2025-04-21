@@ -1,65 +1,39 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
-import auth from "@react-native-firebase/auth";
-import { View, Text, StyleSheet } from "react-native";
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { checkForRegisteredUser } from "../(Home)/Services/backendoperations";
 import Signup from "./Signup";
 import { useAuth } from "../context/userContext";
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId:
-    "115722995141-4j5ka6kdo1roir0jhlj47n2874eviqgd.apps.googleusercontent.com",
-});
-
 const Auth = () => {
-  const [email, setEmail] = useState<any>(null);
-  const [isNew, setIsNew] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [isNew, setIsNew] = useState(false);
   const router = useRouter();
   const { forceSetUser } = useAuth();
 
-  const signInWithGoogle = async () => {
+  const handleSignIn = async () => {
     try {
-      await GoogleSignin.signOut();
-
-      // Ensure Play Services are available
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
-
-      // Perform Google sign-in
-      const response = await GoogleSignin.signIn();
-
-      // Check if the sign-in was successful
-      if (response.type === "success") {
-        setEmail(response.data.user.email);
-
-        const isOldUser = await checkForRegisteredUser(
-          response.data.user.email
-        );
-        console.log("Is Old User: ", isOldUser);
-        if (isOldUser) {
-          forceSetUser();
-          router.replace("/home");
-        } else {
-          setIsNew(true);
-        }
-      } else {
-        console.log("Sign-In Cancelled");
+      if (!email) {
+        alert("Please enter your email");
+        return;
       }
-    } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled login");
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Sign-in is already in progress");
+
+      const isOldUser = await checkForRegisteredUser(email);
+      if (isOldUser) {
+        forceSetUser();
+        router.replace("/home");
       } else {
-        console.error("Google Sign-In Error:", error);
+        setIsNew(true);
       }
+    } catch (error) {
+      console.error("Sign-In Error:", error);
+      alert("An error occurred during sign in");
     }
   };
 
@@ -67,11 +41,18 @@ const Auth = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
 
-      <GoogleSigninButton
-        size={GoogleSigninButton.Size.Wide}
-        color={GoogleSigninButton.Color.Dark}
-        onPress={signInWithGoogle}
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
+
+      <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+        <Text style={styles.buttonText}>Continue</Text>
+      </TouchableOpacity>
     </View>
   ) : (
     <Signup phone={email} />
@@ -84,21 +65,35 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f8f8f8",
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
   },
-  userInfo: {
-    marginTop: 20,
-    padding: 10,
+  input: {
+    width: "100%",
+    height: 50,
     backgroundColor: "#fff",
     borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  button: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

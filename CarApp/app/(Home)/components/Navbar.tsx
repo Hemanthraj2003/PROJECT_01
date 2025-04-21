@@ -4,18 +4,56 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import colorThemes from "@/app/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Modal, Portal, Snackbar } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (visible && !user) {
+      loadUserData();
+    }
+  }, [visible]);
+
+  const loadUserData = async () => {
+    setLoading(true);
+    try {
+      const userDetails = await AsyncStorage.getItem("userDetails");
+      if (userDetails) {
+        setUser(JSON.parse(userDetails));
+      }
+    } catch (error) {
+      setSnackbarMessage("Error loading user data");
+      setSnackbarVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("userDetails");
+      setUser(null);
+      setVisible(false);
+      router.replace("/");
+    } catch (error) {
+      setSnackbarMessage("Error logging out");
+      setSnackbarVisible(true);
+    }
+  };
 
   return (
     <View style={style.navbar}>
@@ -30,7 +68,7 @@ const Navbar = () => {
         <View
           style={{
             padding: 8,
-            borderRadius: "50%",
+            borderRadius: 25,
             borderWidth: 0.7,
             borderColor: "white",
           }}
@@ -47,46 +85,80 @@ const Navbar = () => {
           onDismiss={() => setVisible(false)}
           contentContainerStyle={style.modal}
         >
-          <Text style={style.title}>User Profile</Text>
-          <ScrollView style={style.container}>
-            <View style={style.profileContainer}>
-              <Text style={style.label}>Name:</Text>
-              <Text style={style.text}>{user?.name || "-"}</Text>
-
-              <Text style={style.label}>Address:</Text>
-              <Text style={style.text}>{user?.address || "-"}</Text>
-
-              <Text style={style.label}>City:</Text>
-              <Text style={style.text}>{user?.city || "-"}</Text>
-
-              <Text style={style.label}>State:</Text>
-              <Text style={style.text}>{user?.state || "-"}</Text>
+          <View style={style.modalContent}>
+            <View style={style.modalHeader}>
+              <Text style={style.title}>Profile</Text>
+              <TouchableOpacity onPress={() => setVisible(false)}>
+                <AntDesign name="close" size={24} color={colorThemes.grey} />
+              </TouchableOpacity>
             </View>
-          </ScrollView>
 
-          <View style={style.buttonContainer}>
-            <TouchableOpacity style={style.button}>
-              <Text style={style.buttonText}>Logout</Text>
+            {loading ? (
+              <View style={style.loadingContainer}>
+                <ActivityIndicator size="large" color={colorThemes.primary1} />
+              </View>
+            ) : (
+              <ScrollView
+                style={style.scrollView}
+                contentContainerStyle={style.scrollContent}
+              >
+                <View style={style.profileContainer}>
+                  <View style={style.avatarContainer}>
+                    <View style={style.avatar}>
+                      <Text style={style.avatarText}>
+                        {user?.name ? user.name[0].toUpperCase() : "U"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={style.infoSection}>
+                    <Text style={style.label}>Name</Text>
+                    <Text style={style.text}>{user?.name || "-"}</Text>
+                  </View>
+
+                  <View style={style.infoSection}>
+                    <Text style={style.label}>Phone</Text>
+                    <Text style={style.text}>{user?.phone || "-"}</Text>
+                  </View>
+
+                  <View style={style.divider} />
+
+                  <View style={style.infoSection}>
+                    <Text style={style.label}>Address</Text>
+                    <Text style={style.text}>{user?.address || "-"}</Text>
+                  </View>
+
+                  <View style={style.infoSection}>
+                    <Text style={style.label}>City</Text>
+                    <Text style={style.text}>{user?.city || "-"}</Text>
+                  </View>
+
+                  <View style={style.infoSection}>
+                    <Text style={style.label}>State</Text>
+                    <Text style={style.text}>{user?.state || "-"}</Text>
+                  </View>
+                </View>
+              </ScrollView>
+            )}
+
+            <TouchableOpacity style={style.logoutButton} onPress={handleLogout}>
+              <AntDesign
+                name="logout"
+                size={20}
+                color="white"
+                style={style.logoutIcon}
+              />
+              <Text style={style.logoutText}>Logout</Text>
             </TouchableOpacity>
-          </View>
 
-          <Snackbar
-            visible={snackbarVisible}
-            onDismiss={() => setSnackbarVisible(false)}
-            duration={1000}
-            style={{
-              position: "absolute",
-              bottom: 10,
-              left: 0,
-              right: 0,
-              marginLeft: "auto",
-              marginRight: "auto",
-              zIndex: 10,
-              paddingHorizontal: 20,
-            }}
-          >
-            {snackbarMessage}
-          </Snackbar>
+            <Snackbar
+              visible={snackbarVisible}
+              onDismiss={() => setSnackbarVisible(false)}
+              duration={2000}
+            >
+              {snackbarMessage}
+            </Snackbar>
+          </View>
         </Modal>
       </Portal>
     </View>
@@ -103,67 +175,101 @@ const style = StyleSheet.create({
     paddingStart: 25,
     paddingEnd: 20,
   },
-
   navHeading: {
     color: "white",
     fontSize: 30,
     fontWeight: "500",
   },
-
   modal: {
-    width: "85%",
-    height: "80%",
-    backgroundColor: "white",
-    alignSelf: "center",
-    borderRadius: 20,
-    padding: 20,
+    margin: 20,
+    backgroundColor: "transparent",
   },
-
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 15,
+    padding: 20,
+    maxHeight: "90%",
+    minHeight: "90%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  scrollView: {
+    flex: 1,
+    minHeight: 200,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
   },
-
+  loadingContainer: {
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
+    color: colorThemes.primary1,
   },
-
   profileContainer: {
-    marginVertical: 20,
+    paddingBottom: 20,
   },
-
-  label: {
-    fontSize: 16,
-    marginVertical: 5,
-    fontWeight: "bold",
+  avatarContainer: {
+    alignItems: "center",
+    marginBottom: 24,
   },
-
-  text: {
-    fontSize: 16,
-    marginBottom: 15,
-  },
-
-  buttonContainer: {
-    paddingTop: 10,
-    elevation: 5,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-
-  button: {
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: colorThemes.primary1,
-    padding: 12,
-    borderRadius: 5,
-    width: "48%",
+    justifyContent: "center",
     alignItems: "center",
   },
-
-  buttonText: {
-    color: "#fff",
+  avatarText: {
+    fontSize: 32,
+    color: "white",
     fontWeight: "bold",
   },
+  infoSection: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: colorThemes.grey,
+    marginBottom: 4,
+  },
+  text: {
+    fontSize: 16,
+    color: "#333",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 16,
+  },
+  logoutButton: {
+    backgroundColor: colorThemes.primary1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  logoutIcon: {
+    marginRight: 8,
+  },
+  logoutText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
-
 export default Navbar;

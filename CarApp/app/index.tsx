@@ -3,10 +3,8 @@ import React from "react";
 
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Auth from "./(Auth)/Auth";
 import { useRouter } from "expo-router";
 import { useAuth } from "./context/userContext";
-import Home from "./(Home)/home";
 import OTP from "./(Auth)/OTP";
 
 const index = () => {

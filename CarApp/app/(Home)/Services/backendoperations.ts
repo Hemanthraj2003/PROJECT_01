@@ -1,34 +1,70 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // const API_URL = "http://192.168.1.44:5000";
-const API_URL = "http://192.168.0.111:5000";
+const API_URL = "http://192.168.0.109:5000";
 // const API_URL = "http://192.168.1.3:5000";
 
-export const fetchAllCars = async () => {
-  console.log("fetching all cars ...");
+export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
+  console.log("fetching cars page", page);
 
   try {
-    const response = await fetch(`${API_URL}/cars`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${API_URL}/cars?page=${page}&limit=${limit}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     const data = await response.json();
-    if (data.success && data.data) {
-      return data.data;
-    } else {
-      return [];
+    if (data.success) {
+      return {
+        cars: data.data,
+        pagination: data.pagination,
+      };
     }
+    return {
+      cars: [],
+      pagination: {
+        total: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasMore: false,
+      },
+    };
   } catch (error) {
     console.log(error);
+    return {
+      cars: [],
+      pagination: {
+        total: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasMore: false,
+      },
+    };
   }
 };
 
-export const fetchAllFilteredCars = async (filterParams: any[]) => {
+export const fetchAllFilteredCars = async (
+  filterParams: any[] = [],
+  searchTerm: string = "",
+  page: number = 1,
+  limit: number = 10
+) => {
   try {
-    const response = await fetch(`${API_URL}/cars`, {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (searchTerm) {
+      queryParams.append("searchTerm", searchTerm);
+    }
+
+    const response = await fetch(`${API_URL}/cars?${queryParams.toString()}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,13 +73,32 @@ export const fetchAllFilteredCars = async (filterParams: any[]) => {
     });
 
     const data = await response.json();
-    if (data.success && data.data) {
-      return data.data;
-    } else {
-      return [];
+    if (data.success) {
+      return {
+        cars: data.data,
+        pagination: data.pagination,
+      };
     }
+    return {
+      cars: [],
+      pagination: {
+        total: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasMore: false,
+      },
+    };
   } catch (error) {
     console.log(error);
+    return {
+      cars: [],
+      pagination: {
+        total: 0,
+        currentPage: 1,
+        totalPages: 0,
+        hasMore: false,
+      },
+    };
   }
 };
 
@@ -82,7 +137,7 @@ export const postCarForApproval = async (carData: any) => {
     if (response.status === 201) {
       // Successfully added car
       console.log("Car added successfully:", data);
-      return { success: true, carId: data.carId };
+      return { success: true, carId: data.data.carId };
     } else {
       // Handle any errors
       console.error("Failed to add car:", data.message);

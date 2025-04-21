@@ -1,18 +1,5 @@
 // this file will export all the Database related functions ...
-const admin = require("firebase-admin");
-
-// getting firebase credentials ...
-const key = require("../carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json");
-
-admin.initializeApp({
-  credential: admin.credential.cert(key),
-});
-
-//firestore databse instance ...
-const db = admin.firestore();
-
-// end of boiler plate to access the databases from the firestore ...
-// now we can access the database using [db] ...
+const { db, admin } = require("../config/firebase");
 
 /////////////////////////////////////////
 // START OF USER RELEATED FUNCTIONS
@@ -26,26 +13,35 @@ const getAllUsers = async (req, res) => {
       id: doc.id,
       ...doc.data(),
     }));
-    console.log(users);
-    res.status(200).json({ data: users });
+    res.status(200).json({ success: true, data: users });
   } catch (error) {
-    console.log(error);
-    res.status(500);
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching users",
+      error: error.message,
+    });
   }
 };
 
 const generateOtp = async (req, res) => {
   try {
-    const API_KEY =
-      "zH7O0ScnKmbFMhBu3fIy8jtUkVsdLWi1GAx2rglZ6eDN5aXoT48Uk4lbAGK0XT2sm7LhMiBIujgFJ1Ec";
     const { phoneNumber } = req.body;
     const otp = Math.floor(1000 + Math.random() * 9000);
     console.log("Generated OTP: ", otp);
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
+      });
+    }
+
     if (phoneNumber && otp) {
-      fetch("https://www.fast2sms.com/dev/bulkV2", {
+      const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
         method: "POST",
         headers: {
-          authorization: API_KEY,
+          authorization: process.env.FAST2SMS_API_KEY,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
@@ -53,14 +49,22 @@ const generateOtp = async (req, res) => {
           route: "otp",
           numbers: phoneNumber,
         }),
-      })
-        .then((response) => response.json())
-        .then((data) => console.log(data))
-        .catch((error) => console.error("Error:", error));
+      });
+      const data = await response.json();
+      console.log("SMS API Response:", data);
     }
-    res.status(200).send({ OTP: otp });
-  } catch (e) {
-    console.log(e);
+
+    res.status(200).json({
+      success: true,
+      data: { OTP: otp },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error generating OTP",
+      error: error.message,
+    });
   }
 };
 
@@ -119,6 +123,7 @@ const checkUserExists = async (req, res) => {
 
     const usersRef = db.collection("USERS");
     const querySnapshot = await usersRef.where("phone", "==", phone).get();
+    console.log("results", querySnapshot);
 
     if (!querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
@@ -143,6 +148,7 @@ const checkUserExists = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const userDoc = await db.collection("USERS").doc(id).get();
 
     if (!userDoc.exists) {
@@ -177,15 +183,60 @@ const getUserById = async (req, res) => {
 // fetchs all cars from CARS collection ...
 const getAllCars = async (req, res) => {
   try {
-    const carsSnapshot = await db.collection("CARS").get();
-    const cars = carsSnapshot.docs.map((doc) => ({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startAt = (page - 1) * limit;
+
+    const query = db.collection("CARS");
+
+    // Get total count
+    const totalSnapshot = await query.count().get();
+    const total = totalSnapshot.data().count;
+
+    // Get paginated results
+    const snapshot = await query
+      .orderBy("postedDate", "desc")
+      .limit(limit)
+      .offset(startAt)
+      .get();
+
+    if (snapshot.empty) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: {
+          total: 0,
+          currentPage: page,
+          totalPages: 0,
+          hasMore: false,
+        },
+      });
+    }
+
+    const cars = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
-    res.status(200).json({ success: true, data: cars });
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      success: true,
+      data: cars,
+      pagination: {
+        total,
+        currentPage: page,
+        totalPages,
+        hasMore: page < totalPages,
+      },
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500);
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching cars",
+      error: error.message,
+    });
   }
 };
 
@@ -198,7 +249,11 @@ const getAllPendingCars = async (req, res) => {
       .get();
 
     if (pendingCarsSnapShot.empty) {
-      return res.status(200).json({ message: "No Cars Pending for Approval " });
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: "No Cars Pending for Approval",
+      });
     }
 
     const pendingCars = pendingCarsSnapShot.docs.map((doc) => ({
@@ -206,56 +261,204 @@ const getAllPendingCars = async (req, res) => {
       ...doc.data(),
     }));
 
-    res.status(200).json(pendingCars);
+    res.status(200).json({ success: true, data: pendingCars });
   } catch (error) {
-    console.log(error);
-    res.status(500);
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching pending cars",
+      error: error.message,
+    });
   }
 };
 
 // function to filter cars and return based on the filter parameters
 const getFilteredCars = async (req, res) => {
   try {
-    // Get filter parameters from the request body
-    const filters = req.body.filters || [];
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startAt = (page - 1) * limit;
+    const searchTerm = req.query.searchTerm?.toLowerCase();
 
-    // Validate filter structure
-    if (!Array.isArray(filters)) {
-      return res.status(400).json({ error: "Filters should be an array" });
+    let carsQuery = db.collection("CARS");
+    const filters = [];
+
+    // Combine all filters (from body and query params)
+    if (req.body.filters && Array.isArray(req.body.filters)) {
+      filters.push(...req.body.filters);
     }
 
-    let carsQuery = db.collection("CARS"); // Base query
-
-    // Apply filters dynamically
-    for (const { field, condition, value } of filters) {
-      if (!field || !condition || value === undefined) {
-        return res.status(400).json({
-          error: "Each filter should contain 'field', 'condition', and 'value'",
-        });
-      }
-      carsQuery = carsQuery.where(field, condition, value); // Correct dynamic filtering
+    // Add query params filters
+    if (req.query.brand) {
+      filters.push({
+        field: "carBrand",
+        condition: "==",
+        value: req.query.brand,
+      });
     }
-
-    // Execute the query
-    const carsSnapshot = await carsQuery.get();
-
-    if (carsSnapshot.empty) {
-      return res.status(404).json({
-        success: true,
-        message: "No cars found with the given filters",
+    if (req.query.model) {
+      filters.push({
+        field: "carModel",
+        condition: "==",
+        value: req.query.model,
+      });
+    }
+    if (req.query.year) {
+      filters.push({
+        field: "modelYear",
+        condition: "==",
+        value: parseInt(req.query.year),
+      });
+    }
+    if (req.query.fuelType) {
+      filters.push({
+        field: "fuelType",
+        condition: "==",
+        value: req.query.fuelType,
+      });
+    }
+    if (req.query.status) {
+      filters.push({
+        field: "carStatus",
+        condition: "==",
+        value: req.query.status,
       });
     }
 
-    // Map results
-    const cars = carsSnapshot.docs.map((doc) => ({
+    // Validate all filters first
+    for (const filter of filters) {
+      if (!filter.field || !filter.condition || filter.value === undefined) {
+        return res.status(400).json({
+          error:
+            "Each filter should contain valid 'field', 'condition', and 'value'",
+        });
+      }
+    }
+
+    // Handle search with combined query
+    if (searchTerm) {
+      // Create search index field if it doesn't exist
+      const snapshot = await carsQuery.get();
+
+      // Filter results that match search term in brand or model
+      let searchResults = snapshot.docs.filter((doc) => {
+        const data = doc.data();
+        const brand = data.carBrand.toLowerCase();
+        const model = data.carModel.toLowerCase();
+        return brand.includes(searchTerm) || model.includes(searchTerm);
+      });
+
+      // Apply other filters to search results
+      searchResults = searchResults.filter((doc) => {
+        const data = doc.data();
+        return filters.every((filter) => {
+          const value = data[filter.field];
+          const filterValue =
+            filter.field === "modelYear" ||
+            filter.field === "exceptedPrice" ||
+            filter.field === "km"
+              ? Number(filter.value)
+              : filter.value;
+
+          switch (filter.condition) {
+            case "==":
+              return value === filterValue;
+            case ">=":
+              return value >= filterValue;
+            case "<=":
+              return value <= filterValue;
+            case "in":
+              return Array.isArray(filterValue) && filterValue.includes(value);
+            default:
+              return true;
+          }
+        });
+      });
+
+      // Sort by posted date and apply pagination
+      const sortedResults = searchResults.sort(
+        (a, b) =>
+          new Date(b.data().postedDate).getTime() -
+          new Date(a.data().postedDate).getTime()
+      );
+
+      const total = sortedResults.length;
+      const paginatedCars = sortedResults
+        .slice(startAt, startAt + limit)
+        .map((doc) => ({ id: doc.id, ...doc.data() }));
+
+      const totalPages = Math.ceil(total / limit);
+
+      return res.status(200).json({
+        success: true,
+        data: paginatedCars,
+        pagination: {
+          total,
+          currentPage: page,
+          totalPages,
+          hasMore: page < totalPages,
+          limit,
+        },
+      });
+    }
+
+    // If no search term, apply filters normally
+    for (const filter of filters) {
+      if (
+        filter.field === "modelYear" ||
+        filter.field === "exceptedPrice" ||
+        filter.field === "km"
+      ) {
+        carsQuery = carsQuery.where(
+          filter.field,
+          filter.condition,
+          Number(filter.value)
+        );
+      } else {
+        carsQuery = carsQuery.where(
+          filter.field,
+          filter.condition,
+          filter.value
+        );
+      }
+    }
+
+    // Get total count
+    const totalSnapshot = await carsQuery.count().get();
+    const total = totalSnapshot.data().count;
+
+    // Get paginated results
+    const snapshot = await carsQuery
+      .orderBy("postedDate", "desc")
+      .limit(limit)
+      .offset(startAt)
+      .get();
+
+    const cars = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
-    res.status(200).json({ success: true, data: cars });
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      success: true,
+      data: cars,
+      pagination: {
+        total,
+        currentPage: page,
+        totalPages,
+        hasMore: page < totalPages,
+        limit,
+      },
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch filtered cars" });
+    console.error("Error in getFilteredCars:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch filtered cars",
+      error: error.message,
+    });
   }
 };
 
@@ -300,28 +503,32 @@ const postCarForApproval = async (req, res) => {
     const { postedBy } = carData;
 
     if (!postedBy) {
-      return res
-        .status(400)
-        .json({ message: "postedBy (user docId) is required." });
+      return res.status(400).json({
+        success: false,
+        message: "postedBy (user docId) is required.",
+      });
     }
 
-    // posting the data into database
-    const carRef = db.collection("CARS").doc(); // if we do not specify the doc id, it will autogenerate ...
+    const carRef = db.collection("CARS").doc();
     await carRef.set(carData);
 
-    // now that we have saved the cars detail, we can access the id of the car through carsRef variabele
     const userRef = db.collection("USERS").doc(postedBy);
     await userRef.update({
       onSaleCars: admin.firestore.FieldValue.arrayUnion(carRef.id),
-      // this is a firebase inbuilt methode to add the value into a array
     });
 
-    res
-      .status(201)
-      .json({ message: "Car added successfully", carId: carRef.id });
+    res.status(201).json({
+      success: true,
+      message: "Car added successfully",
+      data: { carId: carRef.id },
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error adding car" });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error adding car",
+      error: error.message,
+    });
   }
 };
 
@@ -363,11 +570,11 @@ const updateCarStatus = async (req, res) => {
     const { status } = req.body;
 
     // Validate status
-    if (!["pending", "approved", "rejected"].includes(status)) {
+    if (!["pending", "approved", "rejected", "sold"].includes(status)) {
       return res.status(400).json({
         success: false,
         message:
-          "Invalid status value. Must be 'pending', 'approved', or 'rejected'",
+          "Invalid status value. Must be 'pending', 'approved', 'rejected', or 'sold'",
       });
     }
 
@@ -385,12 +592,12 @@ const updateCarStatus = async (req, res) => {
       carStatus: status,
     });
 
-    // If status is changing to approved or rejected, update user's car arrays
+    // If status is changing to approved, rejected, or sold, update user's car arrays
     const carData = carDoc.data();
     const postedBy = carData.postedBy;
     const userRef = db.collection("USERS").doc(postedBy);
 
-    if (status === "approved" || status === "rejected") {
+    if (status === "approved" || status === "rejected" || status === "sold") {
       await db.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
         if (!userDoc.exists) {
@@ -404,12 +611,18 @@ const updateCarStatus = async (req, res) => {
         );
 
         // Update relevant arrays based on status
-        if (status === "approved") {
+        if (status === "sold") {
           transaction.update(userRef, {
             onSaleCars: updatedOnSaleCars,
             soldCars: admin.firestore.FieldValue.arrayUnion(id),
           });
+        } else if (status === "approved") {
+          // For approved cars, keep them in onSaleCars
+          transaction.update(userRef, {
+            onSaleCars: admin.firestore.FieldValue.arrayUnion(id),
+          });
         } else {
+          // For rejected cars
           transaction.update(userRef, {
             onSaleCars: updatedOnSaleCars,
           });
