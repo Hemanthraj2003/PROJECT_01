@@ -55,7 +55,7 @@ export default function CarDetails() {
   const fetchCarDetails = async () => {
     try {
       showLoading("Loading car details...");
-      const response = await fetch(`http://localhost:5000/cars/${id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/cars/${id}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch car details: ${response.statusText}`);
       }
@@ -92,13 +92,16 @@ export default function CarDetails() {
             : "Marking as sold"
         } car...`
       );
-      const response = await fetch(`http://localhost:5000/cars/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/cars/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
       const data = await response.json();
 

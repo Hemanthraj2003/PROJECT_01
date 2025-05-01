@@ -83,7 +83,9 @@ export default function UserDetails() {
     try {
       showLoading("Loading user details...");
       // Fetch user details
-      const userResponse = await fetch(`http://localhost:5000/users/${id}`);
+      const userResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API}/users/${id}`
+      );
       if (!userResponse.ok) {
         throw new Error("Failed to fetch user details");
       }
@@ -119,11 +121,14 @@ export default function UserDetails() {
     setter: (cars: CarData[]) => void
   ) => {
     try {
-      const response = await fetch("http://localhost:5000/cars/getMyCars", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ carsIds: carIds }),
-      });
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API + "/cars/getMyCars",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ carsIds: carIds }),
+        }
+      );
       const data = await response.json();
       if (data.success) {
         setter(data.data);

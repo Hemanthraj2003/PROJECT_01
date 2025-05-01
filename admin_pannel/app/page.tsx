@@ -63,8 +63,8 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [carsResponse, usersResponse] = await Promise.all([
-        fetch("http://localhost:5000/cars"),
-        fetch("http://localhost:5000/users"),
+        fetch(process.env.NEXT_PUBLIC_API + "/cars"),
+        fetch(process.env.NEXT_PUBLIC_API + "/users"),
       ]);
 
       const [carsData, usersData] = await Promise.all([

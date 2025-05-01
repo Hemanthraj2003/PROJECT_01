@@ -14,14 +14,14 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | undefined>();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
 
   // Show loading during navigation
   useEffect(() => {
     setIsLoading(true);
     const timeout = setTimeout(() => setIsLoading(false), 500); // Minimum loading time
     return () => clearTimeout(timeout);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   const showLoading = (msg?: string) => {
     setMessage(msg);

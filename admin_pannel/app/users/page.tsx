@@ -41,7 +41,7 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       showLoading("Loading users...");
-      const response = await fetch("http://localhost:5000/users");
+      const response = await fetch(process.env.NEXT_PUBLIC_API + "/users");
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);
       }
