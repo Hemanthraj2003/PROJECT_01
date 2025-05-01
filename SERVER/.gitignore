@@ -3,6 +3,8 @@
 .env
 .vscode/
 reference.txt
+app.log
+error.log
 
 # Ignore uploaded files
 /uploads/*
