@@ -173,7 +173,7 @@ export default function SellCars() {
         registrationNumber: registrationNumber,
         description: description,
         transmissionType: transmissionType,
-        images: uploadResult.imageUrls, // Use the returned URLs from backend
+        images: uploadResult.imageUrls,
       };
 
       console.log("Car Data:", finalFormData);

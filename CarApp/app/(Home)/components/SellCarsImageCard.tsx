@@ -3,7 +3,7 @@ import React from "react";
 import { Image } from "expo-image";
 
 type props = {
-  item: { Title: string };
+  item: { URI: string };
   index: number;
 };
 
@@ -14,7 +14,7 @@ export default function SellCarsImageCard({ item, index }: props) {
     <View style={styles.imageContainer}>
       <Image
         source={{
-          uri: "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
+          uri: item.URI,
         }}
         contentFit="contain"
         transition={1000}

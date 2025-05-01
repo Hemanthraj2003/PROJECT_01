@@ -89,6 +89,8 @@ export default function BuyCars() {
         pageToFetch
       );
 
+      console.log("pagination", pagination);
+
       if (reset) {
         setCars(newCars);
       } else {
@@ -589,48 +591,54 @@ export default function BuyCars() {
           }}
           scrollEventThrottle={400}
         >
-          {cars.map((car, index) => (
-            <Card key={index} style={styles.cardStyles}>
-              <Card
-                onPress={() => {
-                  router.push({
-                    pathname: "/components/BuyCarPage",
-                    params: {
-                      data: JSON.stringify(car),
-                    },
-                  });
-                }}
-              >
-                <View style={{ position: "relative" }}>
-                  <Card.Cover
-                    source={{
-                      uri: "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
-                    }}
-                  />
-                  <View style={styles.viewTextContainer}>
-                    <Text style={styles.viewText}>View</Text>
+          {cars.map((car, index) => {
+            const URI =
+              car.images !== undefined && car.images[0] !== undefined
+                ? car.images[0]
+                : "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg";
+            return (
+              <Card key={index} style={styles.cardStyles}>
+                <Card
+                  onPress={() => {
+                    router.push({
+                      pathname: "/components/BuyCarPage",
+                      params: {
+                        data: JSON.stringify(car),
+                      },
+                    });
+                  }}
+                >
+                  <View style={{ position: "relative" }}>
+                    <Card.Cover
+                      source={{
+                        uri: URI,
+                      }}
+                    />
+                    <View style={styles.viewTextContainer}>
+                      <Text style={styles.viewText}>View</Text>
+                    </View>
                   </View>
-                </View>
-              </Card>
+                </Card>
 
-              <Card.Content style={{ paddingVertical: 12 }}>
-                <View style={styles.priceContainer}>
-                  <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
-                </View>
-                <Text style={{ fontSize: 12 }}>
-                  {car.modelYear} {car.carBrand} {car.carModel}
-                </Text>
-                <View style={styles.carDetailsContainer}>
-                  <View style={styles.carDetailBox}>
-                    <Text style={styles.carDetailText}>{car.km} Km</Text>
+                <Card.Content style={{ paddingVertical: 12 }}>
+                  <View style={styles.priceContainer}>
+                    <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
                   </View>
-                  <View style={styles.carDetailBox}>
-                    <Text style={styles.carDetailText}>{car.fuelType}</Text>
+                  <Text style={{ fontSize: 12 }}>
+                    {car.modelYear} {car.carBrand} {car.carModel}
+                  </Text>
+                  <View style={styles.carDetailsContainer}>
+                    <View style={styles.carDetailBox}>
+                      <Text style={styles.carDetailText}>{car.km} Km</Text>
+                    </View>
+                    <View style={styles.carDetailBox}>
+                      <Text style={styles.carDetailText}>{car.fuelType}</Text>
+                    </View>
                   </View>
-                </View>
-              </Card.Content>
-            </Card>
-          ))}
+                </Card.Content>
+              </Card>
+            );
+          })}
           {loading && (
             <View style={{ padding: 20, alignItems: "center" }}>
               <ActivityIndicator size="large" />

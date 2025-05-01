@@ -14,6 +14,8 @@ export default function MyCars() {
   const { showLoading, hideLoading } = useLoading();
 
   useEffect(() => {
+    console.log("user", user);
+
     const fetchCarDetails = async () => {
       try {
         showLoading();
@@ -38,33 +40,38 @@ export default function MyCars() {
   const renderCarItem = ({ item }: { item: any }) => (
     <View
       style={{
+        backgroundColor: "#fff",
+        marginVertical: 6,
+        padding: 12,
+        borderRadius: 12,
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
-        padding: 12,
-        marginVertical: 6,
-        borderRadius: 12,
+
+        // Android elevation
+        elevation: 3,
+
+        // iOS shadow
         shadowColor: "#000",
         shadowOpacity: 0.1,
-        shadowRadius: 5,
+        shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
-        elevation: 3, // Android shadow
       }}
     >
       {/* Car Image */}
       <Image
-        // source={{ uri: item.images[0] }}
         source={{
-          uri: "https://images.wallpapersden.com/image/wl-cool-clove-4k-valorant_92740.jpg",
+          uri:
+            item.images?.[0] ||
+            "https://via.placeholder.com/70x70?text=No+Image",
         }}
         style={{
           width: 70,
           height: 70,
           borderRadius: 10,
           marginRight: 12,
-          backgroundColor: "#e0e0e0", // Fallback if image fails to load
+          backgroundColor: "#e0e0e0",
         }}
-        resizeMode="contain"
+        resizeMode="cover"
       />
 
       {/* Car Details */}
@@ -85,36 +92,37 @@ export default function MyCars() {
   );
 
   const renderOnSaleCars = ({ item }: { item: any }) => (
-    <TouchableOpacity>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          backgroundColor: "#fff",
-          padding: 12,
-          marginVertical: 6,
-          borderRadius: 12,
-          shadowColor: "#000",
-          shadowOpacity: 0.1,
-          shadowRadius: 5,
-          shadowOffset: { width: 0, height: 2 },
-          elevation: 3, // Android shadow
-        }}
-      >
+    <TouchableOpacity
+      style={{
+        backgroundColor: "#fff",
+        marginVertical: 6,
+        borderRadius: 12,
+        padding: 12,
+        // Android elevation
+        elevation: 3,
+        // iOS shadow
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
         {/* Car Image */}
         <Image
-          // source={{ uri: item.images[0] }}
           source={{
-            uri: "https://images.wallpapersden.com/image/wl-cool-clove-4k-valorant_92740.jpg",
+            uri:
+              item.images?.[0] ||
+              "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
           }}
           style={{
             width: 70,
             height: 70,
             borderRadius: 10,
             marginRight: 12,
-            backgroundColor: "#e0e0e0", // Fallback if image fails to load
+            backgroundColor: "#e0e0e0",
           }}
-          resizeMode="contain"
+          resizeMode="cover"
         />
 
         {/* Car Details */}
@@ -131,8 +139,12 @@ export default function MyCars() {
             {item.modelYear} • {item.km} km
           </Text>
         </View>
+
+        {/* Status */}
         <View>
-          {item.status ? <Text>{item.status}</Text> : <Text>pending</Text>}
+          <Text style={{ fontSize: 12, color: "#555" }}>
+            {item.status || "Pending"}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>

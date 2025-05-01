@@ -1,8 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// these are the test api urls!! [>_]
 // const API_URL = "http://192.168.1.44:5000";
-const API_URL = "http://192.168.0.109:5000";
 // const API_URL = "http://192.168.1.3:5000";
+
+// Finall API Production URL
+const API_URL = "http://103.194.228.71:5000";
 
 export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
   console.log("fetching cars page", page);
@@ -74,6 +77,9 @@ export const fetchAllFilteredCars = async (
 
     const data = await response.json();
     if (data.success) {
+      if (data.pagination) {
+        console.log("Pagination data:", data.pagination);
+      }
       return {
         cars: data.data,
         pagination: data.pagination,

@@ -26,11 +26,11 @@ type Car = {
   carBrand: string;
   carModel: string;
   carStatus: string;
-  exceptedPrice: number; // assuming it might be a string in the input
+  exceptedPrice: number;
   fuelType: string;
   id: string;
-  images: string[]; // Array of image URLs or file names
-  km: number; // Assuming mileage is passed as a string
+  images: string[];
+  km: number;
   location: string;
   modelYear: string;
   ownerName: string;
@@ -119,7 +119,7 @@ export default function BuyCarPage() {
           <FlatList
             data={car.images || []}
             renderItem={({ item, index }) => (
-              <SellCarsImageCard index={index} item={{ Title: item }} />
+              <SellCarsImageCard index={index} item={{ URI: item }} />
             )}
             horizontal
             pagingEnabled
