@@ -9,6 +9,7 @@ import {
 import React, { useState, useEffect } from "react";
 import colorThemes from "@/app/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Modal, Portal, Snackbar } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -61,21 +62,34 @@ const Navbar = () => {
         <Text style={style.navHeading}>CARS HUB</Text>
       </View>
 
-      <TouchableOpacity
-        style={{ paddingLeft: 20, paddingRight: 8 }}
-        onPress={() => setVisible(true)}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
       >
-        <View
-          style={{
-            padding: 8,
-            borderRadius: 25,
-            borderWidth: 0.7,
-            borderColor: "white",
-          }}
+        <TouchableOpacity
+          style={{ paddingLeft: 10, paddingRight: 5 }}
+          onPress={() => router.push("/Chats")}
         >
-          <AntDesign name="user" size={22} color="white" />
-        </View>
-      </TouchableOpacity>
+          <Ionicons name="chatbox-ellipses-outline" size={30} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ paddingLeft: 10, paddingRight: 5 }}
+          onPress={() => setVisible(true)}
+        >
+          <View
+            style={{
+              padding: 5.5,
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "white",
+            }}
+          >
+            <AntDesign name="user" size={19} color="white" />
+          </View>
+        </TouchableOpacity>
+      </View>
 
       {/* PROFILE MODAL */}
       <Portal>
@@ -177,7 +191,7 @@ const style = StyleSheet.create({
   },
   navHeading: {
     color: "white",
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "500",
   },
   modal: {

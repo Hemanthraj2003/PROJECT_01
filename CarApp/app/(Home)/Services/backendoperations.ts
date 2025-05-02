@@ -192,7 +192,7 @@ export const registerNewUser = async (userInfo: any) => {
 export const updateUserData = async (userInfo: any) => {
   try {
     const response = await fetch(`${API_URL}/users/update`, {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -201,7 +201,6 @@ export const updateUserData = async (userInfo: any) => {
 
     const data = await response.json();
     if (data.success) {
-      console.log(data);
       AsyncStorage.setItem("userDetails", JSON.stringify(data.data)); // Store user data
       return data.data;
     }

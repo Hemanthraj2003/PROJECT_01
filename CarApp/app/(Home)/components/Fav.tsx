@@ -68,7 +68,9 @@ export default function Profile() {
           >
             <Card.Cover
               source={{
-                uri: "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
+                uri:
+                  car.images?.[0] ||
+                  "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
               }}
             />
             <Card.Content style={{ paddingVertical: 12 }}>

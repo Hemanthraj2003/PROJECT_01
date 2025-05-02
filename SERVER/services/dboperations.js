@@ -643,6 +643,241 @@ const updateCarStatus = async (req, res) => {
   }
 };
 
+/////////////////////////////////////////////
+//////////// CHAT ROUTES ////////////////////
+/////////////////////////////////////////////
+
+//helper function to check if the chat is already initiated or not ...
+const isChatInitiated = async (carId, userId) => {
+  const snapshot = await db
+    .collection("CHATS")
+    .where("carId", "==", carId)
+    .where("userId", "==", userId)
+    .get();
+  if (snapshot.empty) {
+    return { isChat: false };
+  }
+
+  const chatId = snapshot.docs[0].id;
+  return { isChat: true, chatId };
+};
+
+// initialize the chat if not exists and returns the chatId as response
+const startChat = async (req, res) => {
+  const body = req.body;
+  const { carId, userId } = body;
+  try {
+    if (!carId || !userId) {
+      throw new Error("carId and userId are required to start a chat.");
+    }
+
+    const { isChat, chatId } = await isChatInitiated(carId, userId);
+    if (isChat) {
+      return res.status(200).json({
+        success: true,
+        message: "Chat already initiated.",
+        chatId: chatId, // this is used as a paramter to get the chat messages ...
+      });
+    }
+
+    const newChatRef = db.collection("CHATS").doc();
+    const newChat = {
+      id: newChatRef.id,
+      carId,
+      userId,
+      messages: [],
+      readByUser: true,
+      readByAdmin: true,
+      lastMessageAt: new Date().toISOString(),
+    };
+
+    await newChatRef.set(newChat);
+
+    return res.status(200).json({
+      success: true,
+      message: "Chat started successfully.",
+      chatId: newChatRef.id,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error starting chat",
+      error: error.message,
+    });
+  }
+};
+
+const getChatByChatId = async (req, res) => {
+  const body = req.body;
+  const { calledBy } = body;
+  const chatId = req.params.chatId;
+
+  try {
+    if (!calledBy) {
+      throw new Error("'calledBy' is required to get the chat.");
+    }
+    const chatDoc = await db.collection("CHATS").doc(chatId).get();
+    if (!chatDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat not found",
+      });
+    }
+
+    if (calledBy === "user") {
+      await db.collection("CHATS").doc(chatId).update({ readByUser: true });
+    } else if (calledBy === "admin") {
+      await db.collection("CHATS").doc(chatId).update({ readByAdmin: true });
+    }
+
+    const chatData = chatDoc.data();
+    return res.status(200).json({
+      success: true,
+      message: "Chat fetched successfully",
+      data: chatData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching messages",
+      error: error.message,
+    });
+  }
+};
+
+const sendMessageToChatId = async (req, res) => {
+  const body = req.body;
+  const { chatId, messageData } = body;
+  try {
+    if (!chatId) {
+      throw new Error("Chat Id is required to send Message.");
+    }
+    if (!messageData) {
+      throw new Error("Message data is required to send the message...");
+    }
+    if (!messageData.message || !messageData.sentBy || !messageData.timeStamp) {
+      throw new Error(
+        "Message data should contain message, snetBy and timeStamp..."
+      );
+    }
+
+    const chatRef = db.collection("CHATS").doc(chatId);
+    const chatDoc = await chatRef.get();
+    if (!chatDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "Chat not found",
+      });
+    }
+    const chatData = chatDoc.data();
+
+    let updatedChatData = {
+      ...chatData,
+      messages: [messageData, ...chatData.messages],
+      lastMessageAt: messageData.timeStamp,
+    };
+
+    if (messageData.sentBy === "user") {
+      updatedChatData.readByAdmin = false;
+    } else if (messageData.sentBy === "admin") {
+      updatedChatData.readByUser = false;
+    }
+    await chatRef.update(updatedChatData);
+    return res.status(200).json({
+      success: true,
+      message: "Message Sent SuccessFully",
+      data: updatedChatData,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Error sending messages",
+      error: error.message,
+    });
+  }
+};
+
+// for admin to get all the chats of the users ...
+const getChats = async (req, res) => {
+  const { currentPage = 1, pageSize = 10 } = req.body; // default values are 1, anbd 10
+  const offset = (currentPage - 1) * pageSize; // this is t ocalculate the starting index based on the page number and page size ....
+
+  const chatsRef = db.collection("CHATS");
+  const total = (await chatsRef.count().get()).data().count;
+
+  try {
+    const chatsSnapShot = await chatsRef
+      .orderBy("lastMessageAt", "desc")
+      .limit(pageSize)
+      .offset(offset)
+      .get();
+
+    if (chatsSnapShot.empty) {
+      return res
+        .status(200)
+        .json({ success: false, message: "No chats found" });
+    }
+
+    const chatsData = chatsSnapShot.docs.map((doc) => doc.data());
+    const totalPages = Math.ceil(total / pageSize);
+
+    res.status(200).json({
+      success: true,
+      data: chatsData,
+      pagination: {
+        total,
+        currentPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Error while fetching chats" });
+  }
+};
+
+const getUserChats = async (req, res) => {
+  const { currentPage = 1, pageSize = 10 } = req.body;
+  const userId = req.params.userId; // get the userId from the request params
+  const offset = (currentPage - 1) * pageSize;
+  const chatsRef = db.collection("CHATS").where("userId", "==", userId);
+
+  try {
+    if (!currentPage || !pageSize || !userId) {
+      throw new Error("CurrentPage, PageSize and UserId are Required...");
+    }
+
+    const total = (await chatsRef.count().get()).data().count;
+    const totalPages = Math.ceil(total / pageSize);
+    const chatsSnapShot = await chatsRef
+      .orderBy("lastMessageAt", "desc")
+      .limit(pageSize)
+      .offset(offset)
+      .get();
+
+    const chatsData = chatsSnapShot.docs.map((doc) => doc.data());
+
+    return res.status(200).json({
+      success: true,
+      data: chatsData,
+      pagination: {
+        total,
+        currentPage,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Error while fetching chats",
+        error: error.message,
+      });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getAllCars,
@@ -657,4 +892,9 @@ module.exports = {
   getCarById,
   updateCarStatus,
   getUserById,
+  startChat,
+  getChatByChatId,
+  sendMessageToChatId,
+  getChats,
+  getUserChats,
 };

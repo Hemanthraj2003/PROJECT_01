@@ -10,6 +10,7 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug",
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
         "env": {
           "ANDROID_NDK_HOME": "/opt/android-ndk"
         }
@@ -30,7 +31,8 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",
-        "image": "ubuntu-20.04-jdk-11-ndk-r21e",
+        "image": "ubuntu-22.04-jdk-17-ndk-r21e",
+
         "env": {
           "ANDROID_NDK_HOME": "/opt/android-ndk"
         }

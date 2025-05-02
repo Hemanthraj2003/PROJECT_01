@@ -39,7 +39,7 @@ interface FormDataType {
 }
 
 export default function SellCars() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, forceSetUser } = useAuth();
   const [carBrand, setCarBrand] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
   const [exceptedPrice, setExceptedPrice] = useState<string>("");
@@ -190,7 +190,7 @@ export default function SellCars() {
 
           data.onSaleCars.push(response.carId);
           await AsyncStorage.setItem("userDetails", JSON.stringify(data));
-          setUser(JSON.stringify(data));
+          forceSetUser();
         }
         clearData();
       }

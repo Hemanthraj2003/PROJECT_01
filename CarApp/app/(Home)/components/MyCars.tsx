@@ -12,27 +12,33 @@ export default function MyCars() {
   const [sold, setSold] = useState<any>([]);
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCarDetails = async () => {
+    try {
+      showLoading();
+      const onSaleCars = await fetchCarsById(user?.onSaleCars);
+      if (onSaleCars) setOnSale(onSaleCars);
+
+      const boughtCars = await fetchCarsById(user?.boughtCars);
+      if (boughtCars) setBought(boughtCars);
+
+      const soldCars = await fetchCarsById(user?.soldCars);
+      if (soldCars) setSold(soldCars);
+    } catch (error) {
+      console.error("Error fetching car details:", error);
+    } finally {
+      hideLoading();
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCarDetails();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    console.log("user", user);
-
-    const fetchCarDetails = async () => {
-      try {
-        showLoading();
-        const onSaleCars = await fetchCarsById(user?.onSaleCars);
-        if (onSaleCars) setOnSale(onSaleCars);
-
-        const boughtCars = await fetchCarsById(user?.boughtCars);
-        if (boughtCars) setBought(boughtCars);
-
-        const soldCars = await fetchCarsById(user?.soldCars);
-        if (soldCars) setSold(soldCars);
-      } catch (error) {
-        console.error("Error fetching car details:", error);
-      } finally {
-        hideLoading();
-      }
-    };
     fetchCarDetails();
   }, []);
 
@@ -143,7 +149,7 @@ export default function MyCars() {
         {/* Status */}
         <View>
           <Text style={{ fontSize: 12, color: "#555" }}>
-            {item.status || "Pending"}
+            {item.carStatus || "Pending"}
           </Text>
         </View>
       </View>
@@ -159,6 +165,8 @@ export default function MyCars() {
             data={onSale}
             renderItem={renderOnSaleCars}
             keyExtractor={(item) => item.id}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         ) : (
           <Text>No cars on sale</Text>
@@ -170,6 +178,8 @@ export default function MyCars() {
             data={bought}
             renderItem={renderCarItem}
             keyExtractor={(item) => item.id}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         ) : (
           <Text>No bought cars</Text>
@@ -181,6 +191,8 @@ export default function MyCars() {
             data={sold}
             renderItem={renderCarItem}
             keyExtractor={(item) => item.id}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         ) : (
           <Text>No sold cars</Text>
