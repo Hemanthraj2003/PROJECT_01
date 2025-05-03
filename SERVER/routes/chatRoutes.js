@@ -25,7 +25,7 @@ router.post("/send", sendMessageToChatId); // note: send message also toggles th
 router.post("/admin", getChats); // gets all the user, using post so that we can implement filter later ...
 
 // return all the chat of the user
-router.get("user/:userId", getUserChats);
+router.post("/user/:userId", getUserChats);
 
 // return chat of particular id
 router.post("/:chatId", getChatByChatId);

@@ -1,11 +1,9 @@
+import { DEVAPI, PRODAPI } from "@/app/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// these are the test api urls!! [>_]
-// const API_URL = "http://192.168.1.44:5000";
-// const API_URL = "http://192.168.1.3:5000";
-
-// Finall API Production URL
-const API_URL = "http://103.194.228.71:5000";
+// Production API URL
+// const API_URL = PRODAPI;
+const API_URL = DEVAPI;
 
 export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
   console.log("fetching cars page", page);
