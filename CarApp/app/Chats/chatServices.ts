@@ -66,4 +66,32 @@ const sendMessages = async (chatId: string, message: string) => {
   }
 };
 
-export { getMyChats, sendMessages };
+const startChat = async (carId: string, userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/chats/start`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        carId,
+        userId,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(" Error sending message");
+    }
+    const responseData = await response.json();
+    if (!responseData.success) {
+      throw new Error(responseData.message);
+    }
+    console.log("From Services", responseData.chat.id);
+
+    return responseData.chat;
+  } catch (error) {
+    console.log("Error starting chat:", error);
+    return null;
+  }
+};
+
+export { getMyChats, sendMessages, startChat };

@@ -658,8 +658,8 @@ const isChatInitiated = async (carId, userId) => {
     return { isChat: false };
   }
 
-  const chatId = snapshot.docs[0].id;
-  return { isChat: true, chatId };
+  const chat = snapshot.docs[0].data();
+  return { isChat: true, chat };
 };
 
 // initialize the chat if not exists and returns the chatId as response
@@ -671,12 +671,12 @@ const startChat = async (req, res) => {
       throw new Error("carId and userId are required to start a chat.");
     }
 
-    const { isChat, chatId } = await isChatInitiated(carId, userId);
+    const { isChat, chat } = await isChatInitiated(carId, userId);
     if (isChat) {
       return res.status(200).json({
         success: true,
         message: "Chat already initiated.",
-        chatId: chatId, // this is used as a paramter to get the chat messages ...
+        chat: chat, // this is used as a paramter to get the chat messages ...
       });
     }
 
@@ -696,7 +696,7 @@ const startChat = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Chat started successfully.",
-      chatId: newChatRef.id,
+      chat: newChat,
     });
   } catch (error) {
     res.status(500).json({
@@ -779,8 +779,10 @@ const sendMessageToChatId = async (req, res) => {
 
     if (messageData.sentBy === "user") {
       updatedChatData.readByAdmin = false;
+      updatedChatData.readByUser = true;
     } else if (messageData.sentBy === "admin") {
       updatedChatData.readByUser = false;
+      updatedChatData.readByUser = true;
     }
     await chatRef.update(updatedChatData);
     return res.status(200).json({
@@ -868,13 +870,11 @@ const getUserChats = async (req, res) => {
       },
     });
   } catch (error) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Error while fetching chats",
-        error: error.message,
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Error while fetching chats",
+      error: error.message,
+    });
   }
 };
 

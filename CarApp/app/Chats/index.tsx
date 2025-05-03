@@ -51,9 +51,18 @@ const index = () => {
           <Text>No chats found</Text>
         ) : (
           myChats.map((chat) => {
-            console.log(chat);
             return (
-              <View key={chat.id} style={styles.singleChat}>
+              <View
+                key={chat.id}
+                style={[
+                  styles.singleChat,
+                  {
+                    boxShadow: !chat.readByUser
+                      ? `2px 2px 5px 2px ${colorThemes.primary1}`
+                      : "none",
+                  },
+                ]}
+              >
                 <SingleChatCard chat={chat} />
               </View>
             );
@@ -93,5 +102,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     maxWidth: "100%",
     padding: 10,
+    marginBottom: 8,
   },
 });

@@ -97,14 +97,13 @@ const SingleChatCard = ({ chat }: chatProps) => {
                 },
               ]}
             >
-              {chat.messages[0]?.message + "sad saas d asd asd asd asd " ||
-                "No messages yet"}
+              {chat.messages[0]?.message || "No messages yet"}
             </Text>
             <Text
               style={[
                 styles.messageTime,
                 {
-                  color: chat.readByAdmin
+                  color: chat.readByUser
                     ? colorThemes.grey
                     : colorThemes.primary1,
                 },

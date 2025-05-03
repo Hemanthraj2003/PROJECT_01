@@ -17,10 +17,11 @@ import Feather from "@expo/vector-icons/Feather";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import SellCarsImageCard from "./SellCarsImageCard";
 import Navbar from "./Navbar";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/app/context/userContext";
 import { updateUserData } from "../Services/backendoperations";
 import colorThemes from "@/app/theme";
+import { startChat } from "@/app/Chats/chatServices";
 
 type Car = {
   carBrand: string;
@@ -89,6 +90,23 @@ export default function BuyCarPage() {
       updateBackend();
       return !liked;
     });
+  };
+
+  const handleInterested = async () => {
+    if (!car || !user) return;
+    const chat = await startChat(car.id, user.id);
+    console.log(chat);
+
+    if (chat) {
+      router.push({
+        // will work, dont add index, it will break ...
+        pathname: "/Chats/Conversation",
+        params: {
+          chat: JSON.stringify(chat),
+          carData: JSON.stringify(car),
+        },
+      });
+    }
   };
 
   if (!car) {
@@ -347,7 +365,9 @@ export default function BuyCarPage() {
             justifyContent: "center",
           }}
         >
-          <Text style={{ fontSize: 20, color: "white" }}>Call</Text>
+          <TouchableOpacity onPress={handleInterested}>
+            <Text style={{ fontSize: 20, color: "white" }}>Call</Text>
+          </TouchableOpacity>
         </View>
         <View
           style={{ width: 70, justifyContent: "center", alignItems: "center" }}

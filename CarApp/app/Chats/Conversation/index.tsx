@@ -121,42 +121,58 @@ const index = () => {
             scrollViewRef?.scrollToEnd();
           }}
         >
-          {chat?.messages
-            .slice()
-            .reverse()
-            .map((msg, idx) => {
-              const isUser = msg.sentBy === "user";
+          {chat?.messages?.length === 0 ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ textAlign: "center", color: colorThemes.primary1 }}
+              >
+                No messages yet ...
+              </Text>
+            </View>
+          ) : (
+            chat?.messages
+              ?.slice()
+              .reverse()
+              .map((msg, idx) => {
+                const isUser = msg.sentBy === "user";
 
-              return (
-                <View
-                  key={idx}
-                  style={{
-                    alignSelf: isUser ? "flex-end" : "flex-start",
-                    maxWidth: "80%",
-                    backgroundColor: isUser ? "#DCF8C6" : "#fff",
-                    padding: 10,
-                    borderRadius: 10,
-                    marginVertical: 4,
-                    borderTopLeftRadius: isUser ? 10 : 0,
-                    borderTopRightRadius: isUser ? 0 : 10,
-                  }}
-                >
-                  <Text style={{ fontSize: 16, color: "#333" }}>
-                    {msg.message}
-                  </Text>
-                  <Text
+                return (
+                  <View
+                    key={idx}
                     style={{
-                      fontSize: 10,
-                      color: "#888",
-                      textAlign: "right",
-                      marginTop: 4,
+                      alignSelf: isUser ? "flex-end" : "flex-start",
+                      maxWidth: "80%",
+                      backgroundColor: isUser ? "#DCF8C6" : "#fff",
+                      padding: 10,
+                      borderRadius: 10,
+                      marginVertical: 4,
+                      borderTopLeftRadius: isUser ? 10 : 0,
+                      borderTopRightRadius: isUser ? 0 : 10,
                     }}
                   >
-                    {dayjs(msg.timeStamp).format("hh:mm A")}
-                  </Text>
-                </View>
-              );
-            })}
+                    <Text style={{ fontSize: 16, color: "#333" }}>
+                      {msg.message}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        color: "#888",
+                        textAlign: "right",
+                        marginTop: 4,
+                      }}
+                    >
+                      {dayjs(msg.timeStamp).format("hh:mm A")}
+                    </Text>
+                  </View>
+                );
+              })
+          )}
         </ScrollView>
       </View>
       {/* KeyBoard */}
@@ -204,7 +220,6 @@ const ChatmessageKeyBoard = ({ sendMessageHook }: any) => {
               alignItems: "center",
             }}
           >
-            marginStart: -5,
             <FontAwesome
               name="send"
               size={20}
