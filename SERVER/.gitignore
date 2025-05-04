@@ -9,3 +9,5 @@ error.log
 # Ignore uploaded files
 /uploads/*
 !uploads/.gitkeep
+
+./carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json
