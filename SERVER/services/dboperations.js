@@ -688,7 +688,7 @@ const startChat = async (req, res) => {
       messages: [],
       readByUser: true,
       readByAdmin: true,
-      lastMessageAt: new Date().toISOString(),
+      lastMessageAt: null,
     };
 
     await newChatRef.set(newChat);
@@ -780,9 +780,12 @@ const sendMessageToChatId = async (req, res) => {
     if (messageData.sentBy === "user") {
       updatedChatData.readByAdmin = false;
       updatedChatData.readByUser = true;
-    } else if (messageData.sentBy === "admin") {
+    } 
+    if (messageData.sentBy === "admin") {
+console.log("trying to et the admin message...");
+
       updatedChatData.readByUser = false;
-      updatedChatData.readByUser = true;
+      updatedChatData.readByAdmin = true;
     }
     await chatRef.update(updatedChatData);
     return res.status(200).json({
@@ -804,7 +807,7 @@ const getChats = async (req, res) => {
   const { currentPage = 1, pageSize = 10 } = req.body; // default values are 1, anbd 10
   const offset = (currentPage - 1) * pageSize; // this is t ocalculate the starting index based on the page number and page size ....
 
-  const chatsRef = db.collection("CHATS");
+  const chatsRef = db.collection("CHATS").where("lastMessageAt", "!=", null);
   const total = (await chatsRef.count().get()).data().count;
 
   try {
@@ -843,7 +846,10 @@ const getUserChats = async (req, res) => {
   const { currentPage = 1, pageSize = 10 } = req.body;
   const userId = req.params.userId; // get the userId from the request params
   const offset = (currentPage - 1) * pageSize;
-  const chatsRef = db.collection("CHATS").where("userId", "==", userId);
+  const chatsRef = db.collection("CHATS")
+  .where("userId", "==", userId)
+  .where("lastMessageAt", "!=", null);
+
 
   try {
     if (!currentPage || !pageSize || !userId) {
