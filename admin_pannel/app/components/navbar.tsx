@@ -6,6 +6,7 @@ import {
   DirectionsCar as CarIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
+  Forum as ForumIcon,
 } from "@mui/icons-material";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/authContext";
@@ -21,6 +22,7 @@ export default function Navbar() {
     { text: "Dashboard", path: "/", icon: <DashboardIcon /> },
     { text: "Cars", path: "/cars", icon: <CarIcon /> },
     { text: "Users", path: "/users", icon: <PersonIcon /> },
+    { text: "Chats", path: "/chats", icon: <ForumIcon /> },
   ];
 
   const handleNavigation = (path: string) => {
