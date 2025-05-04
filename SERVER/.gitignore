@@ -10,4 +10,5 @@ error.log
 /uploads/*
 !uploads/.gitkeep
 
-carshu-1e768-firebase-adminsdk-fbsvc-bad16c238f.json
+carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json
+app.log
