@@ -34,25 +34,16 @@ export default function Profile() {
   }, []);
 
   return likedCars.length === 0 ? (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 20,
-      }}
-    >
-      <AntDesign name="heart" size={80} color="#e8e8e8" />
-      <Text style={{ color: "#c9c9c9" }}>Your favroites goes here</Text>
+    <View style={styles.emptyContainer}>
+      <AntDesign name="heart" size={80} color={colorThemes.backgroundDark} />
+      <Text style={styles.emptyText}>Your favorites go here</Text>
     </View>
   ) : (
     <>
-      <View style={{ paddingVertical: 10 }}>
-        <Text style={{ textAlign: "center", fontWeight: 900, fontSize: 18 }}>
-          My Favorites
-        </Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>My Favorites</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         {likedCars.map((car, index) => (
           <Card
             key={index}
@@ -73,17 +64,17 @@ export default function Profile() {
                   "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
               }}
             />
-            <Card.Content style={{ paddingVertical: 12 }}>
+            <Card.Content style={styles.cardContent}>
               <View style={styles.priceContainer}>
                 <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
                 <Ionicons
                   name="heart"
                   size={28}
-                  color={colorThemes.primary2}
-                  style={{ paddingRight: 10 }}
+                  color={colorThemes.primary}
+                  style={styles.heartIcon}
                 />
               </View>
-              <Text style={{ fontSize: 12 }}>
+              <Text style={styles.carTitle}>
                 {car.modelYear} {car.carBrand} {car.carModel}
               </Text>
               <View style={styles.carDetailsContainer}>
@@ -93,6 +84,13 @@ export default function Profile() {
                 <View style={styles.carDetailBox}>
                   <Text style={styles.carDetailText}>{car.fuelType}</Text>
                 </View>
+                {car.transmissionType && (
+                  <View style={styles.carDetailBox}>
+                    <Text style={styles.carDetailText}>
+                      {car.transmissionType}
+                    </Text>
+                  </View>
+                )}
               </View>
             </Card.Content>
           </Card>
@@ -103,34 +101,91 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 20,
+    backgroundColor: colorThemes.backgroundLight,
+  },
+  emptyText: {
+    color: colorThemes.textSecondary,
+    fontSize: 16,
+    textAlign: "center",
+  },
+  headerContainer: {
+    paddingVertical: 14,
+    backgroundColor: colorThemes.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colorThemes.backgroundDark,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  headerText: {
+    textAlign: "center",
+    fontWeight: "700",
+    fontSize: 18,
+    color: colorThemes.primary,
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: colorThemes.backgroundLight,
+  },
   cardmargin: {
-    marginVertical: 8,
+    marginVertical: 10,
     marginHorizontal: 12,
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cardContent: {
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
   priceContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 4,
   },
   priceText: {
     paddingVertical: 3,
     fontWeight: "700",
-    fontSize: 17,
+    fontSize: 18,
+    color: colorThemes.primary,
+  },
+  heartIcon: {
+    paddingRight: 10,
+  },
+  carTitle: {
+    fontSize: 14,
+    color: colorThemes.textPrimary,
+    marginBottom: 6,
+    fontWeight: "500",
   },
   carDetailsContainer: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
     marginTop: 8,
+    flexWrap: "wrap",
   },
   carDetailBox: {
-    padding: 5,
-    backgroundColor: "#6C757D",
-    borderRadius: 5,
+    padding: 6,
+    backgroundColor: colorThemes.accent2,
+    borderRadius: 6,
     justifyContent: "center",
   },
   carDetailText: {
     fontSize: 12,
-    color: "white",
+    color: colorThemes.textLight,
     paddingHorizontal: 5,
+    fontWeight: "500",
   },
 });

@@ -5,19 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import colorThemes from "@/app/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Modal, Portal, Snackbar } from "react-native-paper";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/app/context/userContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
-  const { user, setUser } = useAuth();
+  const { user, setUser, removeUser } = useAuth();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,50 +48,58 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("userDetails");
-      setUser(null);
       setVisible(false);
+
+      // Use the removeUser function from the auth context
+      // This ensures proper cleanup of the user state
+      await removeUser();
+
+      // Navigate to the login screen
       router.replace("/");
     } catch (error) {
+      console.error("Error during logout:", error);
       setSnackbarMessage("Error logging out");
       setSnackbarVisible(true);
     }
   };
 
   return (
-    <View style={style.navbar}>
-      <View>
-        <Text style={style.navHeading}>CARS HUB</Text>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-        }}
+    <View>
+      <LinearGradient
+        colors={[colorThemes.primary, colorThemes.accent2]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={style.navbar}
       >
-        <TouchableOpacity
-          style={{ paddingLeft: 10, paddingRight: 5 }}
-          onPress={() => router.push("/Chats")}
-        >
-          <Ionicons name="chatbox-ellipses-outline" size={30} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{ paddingLeft: 10, paddingRight: 5 }}
-          onPress={() => setVisible(true)}
-        >
-          <View
-            style={{
-              padding: 5.5,
-              borderRadius: 25,
-              borderWidth: 1,
-              borderColor: "white",
-            }}
+        <View style={style.logoContainer}>
+          <Image
+            source={require("@/assets/images/icon2.png")}
+            style={style.logoImage}
+            resizeMode="cover"
+          />
+        </View>
+
+        <View style={style.navActions}>
+          <TouchableOpacity
+            style={style.iconButton}
+            onPress={() => router.push("/Chats")}
           >
-            <AntDesign name="user" size={19} color="white" />
-          </View>
-        </TouchableOpacity>
-      </View>
+            <Ionicons
+              name="chatbox-ellipses-outline"
+              size={28}
+              color={colorThemes.textLight}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={style.iconButton}
+            onPress={() => setVisible(true)}
+          >
+            <View style={style.userIconContainer}>
+              <AntDesign name="user" size={18} color={colorThemes.textLight} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       {/* PROFILE MODAL */}
       <Portal>
@@ -109,20 +119,26 @@ const Navbar = () => {
 
             {loading ? (
               <View style={style.loadingContainer}>
-                <ActivityIndicator size="large" color={colorThemes.primary1} />
+                <ActivityIndicator size="large" color={colorThemes.primary} />
               </View>
             ) : (
               <ScrollView
                 style={style.scrollView}
                 contentContainerStyle={style.scrollContent}
+                showsVerticalScrollIndicator={false}
               >
                 <View style={style.profileContainer}>
                   <View style={style.avatarContainer}>
-                    <View style={style.avatar}>
+                    <LinearGradient
+                      colors={[colorThemes.primary, colorThemes.accent2]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={style.avatar}
+                    >
                       <Text style={style.avatarText}>
                         {user?.name ? user.name[0].toUpperCase() : "U"}
                       </Text>
-                    </View>
+                    </LinearGradient>
                   </View>
 
                   <View style={style.infoSection}>
@@ -155,14 +171,21 @@ const Navbar = () => {
               </ScrollView>
             )}
 
-            <TouchableOpacity style={style.logoutButton} onPress={handleLogout}>
-              <AntDesign
-                name="logout"
-                size={20}
-                color="white"
-                style={style.logoutIcon}
-              />
-              <Text style={style.logoutText}>Logout</Text>
+            <TouchableOpacity onPress={handleLogout}>
+              <LinearGradient
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={style.logoutButton}
+              >
+                <AntDesign
+                  name="logout"
+                  size={20}
+                  color="white"
+                  style={style.logoutIcon}
+                />
+                <Text style={style.logoutText}>Logout</Text>
+              </LinearGradient>
             </TouchableOpacity>
 
             <Snackbar
@@ -184,32 +207,74 @@ const style = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: colorThemes.primary1,
-    padding: 12,
-    paddingStart: 25,
-    paddingEnd: 20,
+    padding: 0,
+    height: 56,
+    // Add a subtle shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    paddingStart: 20,
+  },
+  logoImage: {
+    width: 120,
+    height: 40,
   },
   navHeading: {
-    color: "white",
-    fontSize: 28,
-    fontWeight: "500",
+    color: colorThemes.textLight,
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  navActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+
+    paddingRight: 8,
+  },
+  iconButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  userIconContainer: {
+    padding: 6,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: colorThemes.textLight,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   modal: {
     margin: 20,
     backgroundColor: "transparent",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: colorThemes.background,
     borderRadius: 15,
     padding: 20,
     maxHeight: "90%",
     minHeight: "90%",
+    // Add shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colorThemes.backgroundDark,
   },
   scrollView: {
     flex: 1,
@@ -229,59 +294,71 @@ const style = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: colorThemes.primary1,
+    color: colorThemes.primary,
   },
   profileContainer: {
     paddingBottom: 20,
   },
   avatarContainer: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 28,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colorThemes.primary1,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
+    // Add shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   avatarText: {
-    fontSize: 32,
-    color: "white",
+    fontSize: 36,
+    color: colorThemes.textLight,
     fontWeight: "bold",
   },
   infoSection: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   label: {
     fontSize: 14,
-    color: colorThemes.grey,
+    color: colorThemes.textSecondary,
     marginBottom: 4,
+    fontWeight: "500",
   },
   text: {
     fontSize: 16,
-    color: "#333",
+    color: colorThemes.textPrimary,
+    fontWeight: "400",
   },
   divider: {
     height: 1,
-    backgroundColor: "#eee",
-    marginVertical: 16,
+    backgroundColor: colorThemes.backgroundDark,
+    marginVertical: 18,
   },
   logoutButton: {
-    backgroundColor: colorThemes.primary1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     marginTop: 16,
+    // Add shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   logoutText: {
-    color: "white",
+    color: colorThemes.textLight,
     fontSize: 16,
     fontWeight: "600",
   },

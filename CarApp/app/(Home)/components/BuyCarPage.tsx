@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ViewStyle,
   TextStyle,
+  Pressable,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -93,19 +94,45 @@ export default function BuyCarPage() {
   };
 
   const handleInterested = async () => {
-    if (!car || !user) return;
-    const chat = await startChat(car.id, user.id);
-    console.log(chat);
+    if (!car) {
+      console.error("No car data available");
+      return;
+    }
 
-    if (chat) {
-      router.push({
-        // will work, dont add index, it will break ...
-        pathname: "/Chats/Conversation",
-        params: {
-          chat: JSON.stringify(chat),
-          carData: JSON.stringify(car),
-        },
-      });
+    if (!user) {
+      console.error("No user data available");
+      return;
+    }
+
+    // Ensure we have a valid user ID
+    if (!user.id || typeof user.id !== "string") {
+      console.error("Invalid user ID:", user.id);
+      return;
+    }
+
+    console.log("Starting chat for car:", car.id, "user:", user.id);
+
+    try {
+      // Force refresh user data from AsyncStorage to ensure we have the latest
+      forceSetUser();
+
+      const chat = await startChat(car.id, user.id);
+      console.log("Chat created:", chat);
+
+      if (chat) {
+        router.push({
+          // will work, dont add index, it will break ...
+          pathname: "/Chats/Conversation",
+          params: {
+            chat: JSON.stringify(chat),
+            carData: JSON.stringify(car),
+          },
+        });
+      } else {
+        console.error("Failed to create chat");
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error);
     }
   };
 
@@ -356,7 +383,8 @@ export default function BuyCarPage() {
           flexDirection: "row",
         }}
       >
-        <View
+        <TouchableOpacity
+          onPress={handleInterested}
           style={{
             backgroundColor: colorThemes.primary2,
             flex: 1,
@@ -365,12 +393,19 @@ export default function BuyCarPage() {
             justifyContent: "center",
           }}
         >
-          <TouchableOpacity onPress={handleInterested}>
-            <Text style={{ fontSize: 20, color: "white" }}>Call</Text>
-          </TouchableOpacity>
-        </View>
+          <View>
+            {/* <> */}
+            <Text style={{ fontSize: 20, color: "white" }}>Chat With Us</Text>
+          </View>
+        </TouchableOpacity>
+        {/* </Pressable> */}
+
         <View
-          style={{ width: 70, justifyContent: "center", alignItems: "center" }}
+          style={{
+            width: 70,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
           <TouchableOpacity onPress={toggleLikedCars}>
             <Ionicons

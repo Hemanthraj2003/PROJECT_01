@@ -1,9 +1,17 @@
-import { View, Text, FlatList, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById } from "../Services/backendoperations";
 import { useLoading } from "@/app/context/loadingContext";
+import colorThemes from "@/app/theme";
 
 export default function MyCars() {
   const [value, setValue] = useState("onSale");
@@ -44,25 +52,7 @@ export default function MyCars() {
 
   // Function to render list items
   const renderCarItem = ({ item }: { item: any }) => (
-    <View
-      style={{
-        backgroundColor: "#fff",
-        marginVertical: 6,
-        padding: 12,
-        borderRadius: 12,
-        flexDirection: "row",
-        alignItems: "center",
-
-        // Android elevation
-        elevation: 3,
-
-        // iOS shadow
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        shadowOffset: { width: 0, height: 2 },
-      }}
-    >
+    <View style={styles.carItemContainer}>
       {/* Car Image */}
       <Image
         source={{
@@ -70,27 +60,19 @@ export default function MyCars() {
             item.images?.[0] ||
             "https://via.placeholder.com/70x70?text=No+Image",
         }}
-        style={{
-          width: 70,
-          height: 70,
-          borderRadius: 10,
-          marginRight: 12,
-          backgroundColor: "#e0e0e0",
-        }}
+        style={styles.carImage}
         resizeMode="cover"
       />
 
       {/* Car Details */}
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 18, fontWeight: "bold", color: "#333" }}>
+      <View style={styles.carDetailsContainer}>
+        <Text style={styles.carTitle}>
           {item.carBrand} {item.carModel}
         </Text>
 
-        <Text style={{ fontSize: 16, fontWeight: "600", color: "#FF5733" }}>
-          ₹{item.exceptedPrice}
-        </Text>
+        <Text style={styles.carPrice}>₹{item.exceptedPrice}</Text>
 
-        <Text style={{ fontSize: 14, color: "#777", marginTop: 2 }}>
+        <Text style={styles.carInfo}>
           {item.modelYear} • {item.km} km
         </Text>
       </View>
@@ -98,22 +80,8 @@ export default function MyCars() {
   );
 
   const renderOnSaleCars = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={{
-        backgroundColor: "#fff",
-        marginVertical: 6,
-        borderRadius: 12,
-        padding: 12,
-        // Android elevation
-        elevation: 3,
-        // iOS shadow
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <TouchableOpacity style={styles.onSaleItemContainer}>
+      <View style={styles.onSaleItemContent}>
         {/* Car Image */}
         <Image
           source={{
@@ -121,35 +89,41 @@ export default function MyCars() {
               item.images?.[0] ||
               "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
           }}
-          style={{
-            width: 70,
-            height: 70,
-            borderRadius: 10,
-            marginRight: 12,
-            backgroundColor: "#e0e0e0",
-          }}
+          style={styles.carImage}
           resizeMode="cover"
         />
 
         {/* Car Details */}
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 18, fontWeight: "bold", color: "#333" }}>
+        <View style={styles.carDetailsContainer}>
+          <Text style={styles.carTitle}>
             {item.carBrand} {item.carModel}
           </Text>
 
-          <Text style={{ fontSize: 16, fontWeight: "600", color: "#FF5733" }}>
-            ₹{item.exceptedPrice}
-          </Text>
+          <Text style={styles.carPrice}>₹{item.exceptedPrice}</Text>
 
-          <Text style={{ fontSize: 14, color: "#777", marginTop: 2 }}>
+          <Text style={styles.carInfo}>
             {item.modelYear} • {item.km} km
           </Text>
         </View>
 
         {/* Status */}
-        <View>
-          <Text style={{ fontSize: 12, color: "#555" }}>
-            {item.carStatus || "Pending"}
+        <View style={styles.statusContainer}>
+          <Text
+            style={[
+              styles.statusText,
+              {
+                color:
+                  item.carStatus === "approved"
+                    ? colorThemes.success
+                    : item.carStatus === "rejected"
+                    ? colorThemes.error
+                    : colorThemes.warning,
+              },
+            ]}
+          >
+            {item.carStatus
+              ? item.carStatus.charAt(0).toUpperCase() + item.carStatus.slice(1)
+              : "Pending"}
           </Text>
         </View>
       </View>
@@ -167,9 +141,13 @@ export default function MyCars() {
             keyExtractor={(item) => item.id}
             refreshing={refreshing}
             onRefresh={onRefresh}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <Text>No cars on sale</Text>
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.emptyStateText}>No cars on sale</Text>
+          </View>
         );
 
       case "bought":
@@ -180,9 +158,13 @@ export default function MyCars() {
             keyExtractor={(item) => item.id}
             refreshing={refreshing}
             onRefresh={onRefresh}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <Text>No bought cars</Text>
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.emptyStateText}>No bought cars</Text>
+          </View>
         );
 
       case "sold":
@@ -193,9 +175,13 @@ export default function MyCars() {
             keyExtractor={(item) => item.id}
             refreshing={refreshing}
             onRefresh={onRefresh}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <Text>No sold cars</Text>
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.emptyStateText}>No sold cars</Text>
+          </View>
         );
 
       default:
@@ -204,7 +190,7 @@ export default function MyCars() {
   };
 
   return (
-    <View style={{ flex: 1, padding: 8 }}>
+    <View style={styles.container}>
       {/* Segmented Buttons */}
       <SegmentedButtons
         value={value}
@@ -214,10 +200,108 @@ export default function MyCars() {
           { value: "bought", label: "Bought" },
           { value: "sold", label: "Sold" },
         ]}
+        style={styles.segmentedButtons}
       />
 
       {/* Content Rendering */}
-      <View style={{ flex: 1, marginTop: 20 }}>{renderContent()}</View>
+      <View style={styles.contentContainer}>{renderContent()}</View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: colorThemes.backgroundLight,
+  },
+  segmentedButtons: {
+    backgroundColor: colorThemes.background,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  contentContainer: {
+    flex: 1,
+    marginTop: 20,
+  },
+  carItemContainer: {
+    backgroundColor: colorThemes.background,
+    marginVertical: 8,
+    padding: 14,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  onSaleItemContainer: {
+    backgroundColor: colorThemes.background,
+    marginVertical: 8,
+    borderRadius: 12,
+    padding: 14,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  onSaleItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  carImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: colorThemes.backgroundDark,
+  },
+  carDetailsContainer: {
+    flex: 1,
+  },
+  carTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colorThemes.textPrimary,
+    marginBottom: 2,
+  },
+  carPrice: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colorThemes.primary,
+    marginBottom: 2,
+  },
+  carInfo: {
+    fontSize: 14,
+    color: colorThemes.textSecondary,
+    marginTop: 2,
+  },
+  statusContainer: {
+    paddingHorizontal: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: colorThemes.textSecondary,
+    textAlign: "center",
+  },
+  listContentContainer: {
+    paddingBottom: 20,
+  },
+});

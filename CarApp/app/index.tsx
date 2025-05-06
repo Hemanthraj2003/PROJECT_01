@@ -1,41 +1,66 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, View, ActivityIndicator } from "react-native";
 import React from "react";
-
 import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { SplashScreen, useRouter } from "expo-router";
 import { useAuth } from "./context/userContext";
 import OTP from "./(Auth)/OTP";
+import colorThemes from "./theme";
 
-const index = () => {
-  // state variable to check if loggedIn or not...
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const { setUser, user } = useAuth();
-  // router instance to use naviagtion
+SplashScreen.preventAutoHideAsync();
+
+const Index = () => {
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const { validateSession, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // fetching the user deatils to see if they are logged in already ...
-    const fetchUserLoggedInfo = async () => {
-      const storedData = await AsyncStorage.getItem("userDetails");
-      if (storedData != null) {
-        setIsLoggedIn(true);
-        const data = JSON.parse(storedData);
-        console.log(data);
+    // Check if the user is already authenticated
+    const checkAuthentication = async () => {
+      try {
+        console.log("Checking authentication status...");
+        const isValid = await validateSession();
 
-        setUser(data);
+        if (isValid) {
+          console.log("Valid session found, redirecting to home");
+          router.replace("/home");
+        } else {
+          console.log("No valid session found, showing login screen");
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+      } finally {
+        setInitialCheckDone(true);
 
-        router.replace("/home");
+        // Hide the splash screen after authentication check
+        setTimeout(() => {
+          SplashScreen.hideAsync();
+        }, 500);
       }
     };
 
-    fetchUserLoggedInfo();
+    checkAuthentication();
   }, []);
 
-  return !isLoggedIn && <OTP />;
-  // return ;
+  // Show loading indicator while checking authentication
+  if (isLoading || !initialCheckDone) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colorThemes.primary} />
+      </View>
+    );
+  }
+
+  // If not authenticated, show the OTP screen
+  return !isAuthenticated && <OTP />;
 };
 
-export default index;
+export default Index;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colorThemes.background,
+  },
+});

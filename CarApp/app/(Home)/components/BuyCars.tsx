@@ -12,6 +12,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Card, Modal, Portal } from "react-native-paper";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { LinearGradient } from "expo-linear-gradient";
 import { fetchAllFilteredCars } from "../Services/backendoperations";
 import colorThemes from "@/app/theme";
 import { useLoading } from "@/app/context/loadingContext";
@@ -25,6 +26,7 @@ export default function BuyCars() {
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInputText, setSearchInputText] = useState("");
   const [activeFilters, setActiveFilters] = useState<any[]>([]);
   const router = useRouter();
   const { showLoading, hideLoading } = useLoading();
@@ -54,7 +56,13 @@ export default function BuyCars() {
 
   useEffect(() => {
     getData();
+    setSearchInputText(searchTerm);
   }, []);
+
+  // Initialize searchInputText with searchTerm value
+  useEffect(() => {
+    setSearchInputText(searchTerm);
+  }, [searchTerm]);
 
   useEffect(() => {
     const hasActiveFilters =
@@ -80,7 +88,11 @@ export default function BuyCars() {
 
     try {
       setLoading(true);
-      showLoading();
+      // Only show full-screen loading on initial load or reset
+      if (reset) {
+        showLoading();
+      }
+
       const pageToFetch = reset ? 1 : currentPage;
 
       const { cars: newCars, pagination } = await fetchAllFilteredCars(
@@ -88,8 +100,6 @@ export default function BuyCars() {
         searchTerm,
         pageToFetch
       );
-
-      console.log("pagination", pagination);
 
       if (reset) {
         setCars(newCars);
@@ -103,8 +113,15 @@ export default function BuyCars() {
       console.error(error);
     } finally {
       setLoading(false);
-      hideLoading();
+      // Only hide full-screen loading on initial load or reset
+      if (reset) {
+        hideLoading();
+      }
     }
+  };
+
+  const handleInputChange = (text: string) => {
+    setSearchInputText(text);
   };
 
   const handleSearch = async (text: string) => {
@@ -114,7 +131,7 @@ export default function BuyCars() {
 
     try {
       setLoading(true);
-      showLoading();
+      showLoading(); // Show full-screen loading for search as it's a new query
       const { cars: searchResults, pagination } = await fetchAllFilteredCars(
         activeFilters,
         text,
@@ -134,6 +151,7 @@ export default function BuyCars() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setSearchTerm("");
+    setSearchInputText("");
     setActiveFilters([]);
     clearFilterParams();
     try {
@@ -229,7 +247,7 @@ export default function BuyCars() {
 
     try {
       setLoading(true);
-      showLoading();
+      showLoading(); // Show full-screen loading for filter changes as it's a new query
       setActiveFilters(filterParams);
       const { cars: filteredCars, pagination } = await fetchAllFilteredCars(
         filterParams,
@@ -255,10 +273,6 @@ export default function BuyCars() {
     }
   };
 
-  const toggleVisibility = () => {
-    setShowFilter(!showFilter);
-  };
-
   return (
     <View style={styles.overAllPadding}>
       {/* MODAL FOR FILTER */}
@@ -267,271 +281,395 @@ export default function BuyCars() {
           visible={showFilter}
           dismissable
           onDismiss={() => setShowFilter(false)}
-          style={{ alignItems: "center", flex: 1 }}
+          contentContainerStyle={{
+            alignItems: "center",
+            justifyContent: "center",
+            marginHorizontal: 0,
+            paddingHorizontal: 0,
+          }}
         >
           <View style={filterModal.modalView}>
-            <View style={filterModal.headerContainer}>
-              <View>
-                <Text style={filterModal.modalTitle}>Filter</Text>
-              </View>
-              <View
-                style={{
-                  paddingHorizontal: 25,
-                }}
+            <LinearGradient
+              colors={[colorThemes.primary, colorThemes.accent1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={filterModal.headerContainer}
+            >
+              <Text style={filterModal.modalTitle}>Filter</Text>
+              <TouchableOpacity
+                onPress={() => setShowFilter(false)}
+                style={filterModal.closeButton}
               >
-                <TouchableOpacity onPress={() => setShowFilter(false)}>
-                  <Text style={filterModal.closeX}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+                <Text style={filterModal.closeX}>✕</Text>
+              </TouchableOpacity>
+            </LinearGradient>
             {/* ///////// BODY //////////// */}
-            <View style={filterModal.body}>
+            <ScrollView
+              style={filterModal.scrollView}
+              contentContainerStyle={filterModal.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
               {/* ///////////// PRICE RANGE ///////////////// */}
-              <View>
-                <View>
-                  <Text style={filterModal.filterHeadings}>Price range</Text>
-                </View>
+              <View style={filterModal.filterSection}>
+                <Text style={filterModal.filterHeadings}>Price Range</Text>
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setpr1((prev) => !prev)}>
-                    <View
-                      style={
-                        pr1
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={pr1 && filterModal.selectedText}>
-                        1L - 3L
-                      </Text>
-                    </View>
+                    {pr1 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>1L - 3L</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text
+                          style={{
+                            color: colorThemes.textPrimary,
+                            fontSize: 14,
+                          }}
+                        >
+                          1L - 3L
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setpr2((prev) => !prev)}>
-                    <View
-                      style={
-                        pr2
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={pr2 && filterModal.selectedText}>
-                        3L - 6L
-                      </Text>
-                    </View>
+                    {pr2 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>3L - 6L</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text
+                          style={{
+                            color: colorThemes.textPrimary,
+                            fontSize: 14,
+                          }}
+                        >
+                          3L - 6L
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setpr3((prev) => !prev)}>
-                    <View
-                      style={
-                        pr3
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={pr3 && filterModal.selectedText}>
-                        6L - ...
-                      </Text>
-                    </View>
+                    {pr3 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>6L - ...</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text
+                          style={{
+                            color: colorThemes.textPrimary,
+                            fontSize: 14,
+                          }}
+                        >
+                          6L - ...
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* ///////////// FUEL TYPE ///////////////// */}
-              <View>
-                <View>
-                  <Text style={filterModal.filterHeadings}>Fuel Type</Text>
-                </View>
-
+              <View style={filterModal.filterSection}>
+                <Text style={filterModal.filterHeadings}>Fuel Type</Text>
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setft1((prev) => !prev)}>
-                    <View
-                      style={
-                        ft1
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={ft1 && filterModal.selectedText}>
-                        Petrol
-                      </Text>
-                    </View>
+                    {ft1 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>Petrol</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>Petrol</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setft2((prev) => !prev)}>
-                    <View
-                      style={
-                        ft2
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={ft2 && filterModal.selectedText}>
-                        Diesel
-                      </Text>
-                    </View>
+                    {ft2 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>Diesel</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>Diesel</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setft3((prev) => !prev)}>
-                    <View
-                      style={
-                        ft3
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={ft3 && filterModal.selectedText}>CNG</Text>
-                    </View>
+                    {ft3 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>CNG</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>CNG</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
 
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setft4((prev) => !prev)}>
-                    <View
-                      style={
-                        ft4
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={ft4 && filterModal.selectedText}>EV</Text>
-                    </View>
+                    {ft4 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>EV</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>EV</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setft5((prev) => !prev)}>
-                    <View
-                      style={
-                        ft5
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={ft5 && filterModal.selectedText}>
-                        Hybrid
-                      </Text>
-                    </View>
+                    {ft5 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>Hybrid</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>Hybrid</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* ///////////// Mileage Range ///////////////// */}
-              <View>
-                <View>
-                  <Text style={filterModal.filterHeadings}>Mileage Range</Text>
-                </View>
+              <View style={filterModal.filterSection}>
+                <Text style={filterModal.filterHeadings}>Mileage Range</Text>
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setmr1((prev) => !prev)}>
-                    <View
-                      style={
-                        mr1
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={mr1 && filterModal.selectedText}>
-                        0 - 50k km
-                      </Text>
-                    </View>
+                    {mr1 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>0 - 50k km</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>
+                          0 - 50k km
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setmr2((prev) => !prev)}>
-                    <View
-                      style={
-                        mr2
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={mr2 && filterModal.selectedText}>
-                        50k - 100k km
-                      </Text>
-                    </View>
+                    {mr2 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>
+                          50k - 100k km
+                        </Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>
+                          50k - 100k km
+                        </Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
-                </View>
-                <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setmr3((prev) => !prev)}>
-                    <View
-                      style={
-                        mr3
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={mr3 && filterModal.selectedText}>
-                        100k - ... km
-                      </Text>
-                    </View>
+                    {mr3 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>100k+ km</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>100k+ km</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
 
               {/* ///////////// Transmission Type ///////////////// */}
-
-              <View>
-                <View>
-                  <Text style={filterModal.filterHeadings}>
-                    Transmission Type
-                  </Text>
-                </View>
+              <View style={filterModal.filterSection}>
+                <Text style={filterModal.filterHeadings}>
+                  Transmission Type
+                </Text>
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => settr1((prev) => !prev)}>
-                    <View
-                      style={
-                        tr1
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={tr1 && filterModal.selectedText}>
-                        Manual
-                      </Text>
-                    </View>
+                    {tr1 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>Manual</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>Manual</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => settr2((prev) => !prev)}>
-                    <View
-                      style={
-                        tr2
-                          ? filterModal.selectedParameters
-                          : filterModal.filterParameters
-                      }
-                    >
-                      <Text style={tr2 && filterModal.selectedText}>
-                        Automatic
-                      </Text>
-                    </View>
+                    {tr2 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>Automatic</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>Automatic</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
-            </View>
+            </ScrollView>
 
             {/* //////// BUTTONS ////////// */}
             <View style={filterModal.buttonsContainer}>
               <View style={filterModal.bottomButtons}>
                 <TouchableOpacity
+                  style={filterModal.resetButton}
                   onPress={() => {
                     clearFilterParams();
+                    setActiveFilters([]);
+                    setShowFilter(false);
                     getData(true);
                   }}
                 >
-                  <View style={filterModal.resetButton}>
-                    <Text style={{ fontWeight: "700" }}>RESET</Text>
-                  </View>
+                  <Text
+                    style={{
+                      fontWeight: "700",
+                      color: colorThemes.textPrimary,
+                      fontSize: 16,
+                    }}
+                  >
+                    RESET
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={onFilterSubmit}
                   disabled={!applyEnabled}
+                  style={{ flex: 1 }}
                 >
-                  <View
-                    style={[
-                      filterModal.applyButton,
-                      { backgroundColor: applyEnabled ? "#117cd9" : "#ccc" },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: "900",
-                        fontSize: 16,
-                      }}
+                  {applyEnabled ? (
+                    <LinearGradient
+                      colors={[colorThemes.primary, colorThemes.accent2]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={filterModal.applyButton}
                     >
-                      APPLY
-                    </Text>
-                  </View>
+                      <Text
+                        style={{
+                          color: colorThemes.textLight,
+                          fontWeight: "700",
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        APPLY
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View
+                      style={[
+                        filterModal.applyButton,
+                        { backgroundColor: colorThemes.greyLight },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          color: colorThemes.textLight,
+                          fontWeight: "700",
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        APPLY
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
+
+              {/* Filter count indicator */}
+              {applyEnabled && (
+                <View style={filterModal.filterCountContainer}>
+                  <Text style={filterModal.filterCountText}>
+                    {
+                      [
+                        pr1,
+                        pr2,
+                        pr3,
+                        ft1,
+                        ft2,
+                        ft3,
+                        ft4,
+                        ft5,
+                        mr1,
+                        mr2,
+                        mr3,
+                        tr1,
+                        tr2,
+                      ].filter(Boolean).length
+                    }{" "}
+                    filters selected
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </Modal>
@@ -539,18 +677,28 @@ export default function BuyCars() {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#666" />
+          <Ionicons name="search" size={20} color={colorThemes.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search cars..."
-            value={searchTerm}
-            onChangeText={handleSearch}
-            onSubmitEditing={() => handleSearch(searchTerm)}
+            placeholderTextColor={colorThemes.textSecondary}
+            value={searchInputText}
+            onChangeText={handleInputChange}
+            onSubmitEditing={() => handleSearch(searchInputText)}
             returnKeyType="search"
           />
-          {searchTerm ? (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <Ionicons name="close-circle" size={20} color="#666" />
+          {searchInputText ? (
+            <TouchableOpacity
+              onPress={() => {
+                setSearchInputText("");
+                handleSearch("");
+              }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={colorThemes.textSecondary}
+              />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -564,7 +712,11 @@ export default function BuyCars() {
           <Ionicons
             name="filter"
             size={24}
-            color={activeFilters.length > 0 ? "#fff" : "#666"}
+            color={
+              activeFilters.length > 0
+                ? colorThemes.textLight
+                : colorThemes.textPrimary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -578,18 +730,7 @@ export default function BuyCars() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          onScroll={({ nativeEvent }) => {
-            const { layoutMeasurement, contentOffset, contentSize } =
-              nativeEvent;
-            const paddingToBottom = 20;
-            if (
-              layoutMeasurement.height + contentOffset.y >=
-              contentSize.height - paddingToBottom
-            ) {
-              handleLoadMore();
-            }
-          }}
-          scrollEventThrottle={400}
+          showsVerticalScrollIndicator={false}
         >
           {cars.map((car, index) => {
             const URI =
@@ -598,7 +739,8 @@ export default function BuyCars() {
                 : "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg";
             return (
               <Card key={index} style={styles.cardStyles}>
-                <Card
+                <TouchableOpacity
+                  activeOpacity={0.9}
                   onPress={() => {
                     router.push({
                       pathname: "/components/BuyCarPage",
@@ -608,40 +750,98 @@ export default function BuyCars() {
                     });
                   }}
                 >
-                  <View style={{ position: "relative" }}>
+                  <View style={styles.cardImageContainer}>
                     <Card.Cover
                       source={{
                         uri: URI,
                       }}
+                      style={styles.cardImage}
+                    />
+                    <LinearGradient
+                      colors={["transparent", "rgba(0,0,0,0.7)"]}
+                      style={styles.imageGradient}
                     />
                     <View style={styles.viewTextContainer}>
-                      <Text style={styles.viewText}>View</Text>
+                      <Text style={styles.viewText}>View Details</Text>
                     </View>
                   </View>
-                </Card>
 
-                <Card.Content style={{ paddingVertical: 12 }}>
-                  <View style={styles.priceContainer}>
-                    <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
-                  </View>
-                  <Text style={{ fontSize: 12 }}>
-                    {car.modelYear} {car.carBrand} {car.carModel}
-                  </Text>
-                  <View style={styles.carDetailsContainer}>
-                    <View style={styles.carDetailBox}>
-                      <Text style={styles.carDetailText}>{car.km} Km</Text>
+                  <Card.Content style={styles.cardContent}>
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.priceText}>
+                        ₹ {car.exceptedPrice?.toLocaleString() || ""}
+                      </Text>
+                      <View style={styles.yearBadge}>
+                        <Text style={styles.yearText}>{car.modelYear}</Text>
+                      </View>
                     </View>
-                    <View style={styles.carDetailBox}>
-                      <Text style={styles.carDetailText}>{car.fuelType}</Text>
+                    <Text style={styles.carTitle}>
+                      {car.carBrand} {car.carModel}
+                    </Text>
+                    <View style={styles.carDetailsContainer}>
+                      <View style={styles.carDetailBox}>
+                        <Ionicons
+                          name="speedometer-outline"
+                          size={14}
+                          color={colorThemes.textLight}
+                          style={styles.detailIcon}
+                        />
+                        <Text style={styles.carDetailText}>
+                          {car.km?.toLocaleString() || 0} Km
+                        </Text>
+                      </View>
+                      <View style={styles.carDetailBox}>
+                        <Ionicons
+                          name="water-outline"
+                          size={14}
+                          color={colorThemes.textLight}
+                          style={styles.detailIcon}
+                        />
+                        <Text style={styles.carDetailText}>{car.fuelType}</Text>
+                      </View>
+                      {car.transmissionType && (
+                        <View style={styles.carDetailBox}>
+                          <Ionicons
+                            name="cog-outline"
+                            size={14}
+                            color={colorThemes.textLight}
+                            style={styles.detailIcon}
+                          />
+                          <Text style={styles.carDetailText}>
+                            {car.transmissionType}
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                  </View>
-                </Card.Content>
+                  </Card.Content>
+                </TouchableOpacity>
               </Card>
             );
           })}
+
+          {/* Load More Button */}
+          {hasMore && !loading && (
+            <TouchableOpacity
+              style={styles.loadMoreButton}
+              onPress={handleLoadMore}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.loadMoreGradient}
+              >
+                <Text style={styles.loadMoreText}>Load More Cars</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          {/* Loading Indicator */}
           {loading && (
-            <View style={{ padding: 20, alignItems: "center" }}>
-              <ActivityIndicator size="large" />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colorThemes.primary} />
+              <Text style={styles.loadingText}>Loading more cars...</Text>
             </View>
           )}
         </ScrollView>
@@ -653,185 +853,379 @@ export default function BuyCars() {
 const styles = StyleSheet.create({
   overAllPadding: {
     flex: 1,
-    padding: 10,
+    padding: 12,
+    backgroundColor: colorThemes.backgroundLight,
   },
   noCarsContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: 40,
   },
   noCarsText: {
     fontSize: 18,
-    color: "gray",
+    color: colorThemes.textSecondary,
+    textAlign: "center",
   },
   cardStyles: {
-    marginVertical: 8,
+    marginVertical: 12,
+    borderRadius: 16,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    backgroundColor: colorThemes.background,
+  },
+  cardImageContainer: {
+    position: "relative",
+    height: 180,
+  },
+  cardImage: {
+    height: 180,
+  },
+  imageGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+  },
+  cardContent: {
+    paddingVertical: 16,
+    paddingHorizontal: 14,
   },
   viewTextContainer: {
     position: "absolute",
-    bottom: 10,
-    right: 10,
-    padding: 5,
+    bottom: 12,
+    right: 12,
+    zIndex: 2,
   },
   viewText: {
-    color: "white",
-    fontSize: 15,
-    backgroundColor: "#35353561",
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-    borderRadius: 5,
+    color: colorThemes.textLight,
+    fontSize: 14,
+    fontWeight: "600",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    overflow: "hidden",
   },
   priceContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 6,
   },
   priceText: {
     paddingVertical: 3,
     fontWeight: "700",
-    fontSize: 17,
+    fontSize: 20,
+    color: colorThemes.primary,
+  },
+  yearBadge: {
+    backgroundColor: colorThemes.backgroundDark,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  yearText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colorThemes.textPrimary,
+  },
+  carTitle: {
+    fontSize: 16,
+    color: colorThemes.textPrimary,
+    marginBottom: 8,
+    fontWeight: "600",
   },
   carDetailsContainer: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 8,
+    marginTop: 10,
+    flexWrap: "wrap",
   },
   carDetailBox: {
-    padding: 5,
-    backgroundColor: "#6C757D",
-    borderRadius: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: colorThemes.accent2,
+    borderRadius: 20,
     justifyContent: "center",
+  },
+  detailIcon: {
+    marginRight: 4,
   },
   carDetailText: {
     fontSize: 12,
-    color: "white",
-    paddingHorizontal: 5,
+    color: colorThemes.textLight,
+    fontWeight: "500",
+  },
+  loadingContainer: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colorThemes.textSecondary,
+  },
+  loadMoreButton: {
+    marginVertical: 20,
+    marginHorizontal: 40,
+    borderRadius: 30,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  loadMoreGradient: {
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadMoreText: {
+    color: colorThemes.textLight,
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 1.5,
-    borderWidth: 0.2,
-    borderColor: "black",
+    paddingHorizontal: 14,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
     borderRadius: 10,
-    backgroundColor: "white",
+    backgroundColor: colorThemes.background,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
+    color: colorThemes.textPrimary,
   },
   filterButton: {
-    padding: 8,
-    borderWidth: 0.2,
-    borderColor: "black",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
     borderRadius: 10,
-    backgroundColor: "white",
+    backgroundColor: colorThemes.background,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   activeFilterButton: {
-    backgroundColor: colorThemes.primary2,
-    borderColor: colorThemes.primary2,
+    backgroundColor: colorThemes.primary,
+    borderColor: colorThemes.primary,
   },
 });
 
 const filterModal = StyleSheet.create({
   modalView: {
-    backgroundColor: "white",
-    padding: 20,
-    width: 280,
-    height: "85%",
-    justifyContent: "space-between",
+    backgroundColor: colorThemes.background,
+    padding: 0,
+    width: "95%",
+    maxWidth: 420,
+    maxHeight: "90%",
+    borderRadius: 16,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    overflow: "hidden",
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 1,
-    paddingVertical: 5,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.1)",
+    zIndex: 10,
   },
   modalTitle: {
-    fontWeight: "900",
+    fontWeight: "800",
     fontSize: 24,
-    color: "#616161",
+    color: colorThemes.textLight,
     flex: 1,
-    textAlign: "center",
-    marginStart: 10,
+    letterSpacing: 0.5,
+  },
+  closeButton: {
+    padding: 8,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
     alignItems: "center",
+    justifyContent: "center",
   },
   closeX: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
-    color: "#616161",
-    // padding: 8, // Larger touch target
+    textAlign: "center",
+    marginTop: -3,
+    color: colorThemes.textLight,
+  },
+  scrollView: {
+    width: "100%",
+  },
+  scrollContent: {
+    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+    width: "100%",
   },
   filterHeadings: {
     fontWeight: "700",
     fontSize: 16,
-    color: "#616161",
+    color: colorThemes.primary,
+    marginBottom: 4,
+    marginTop: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: colorThemes.primary,
+    paddingLeft: 10,
+    paddingVertical: 4,
   },
-
-  body: {
-    justifyContent: "space-evenly",
-    flex: 1,
+  filterSection: {
+    marginBottom: 12,
+    backgroundColor: colorThemes.backgroundLight,
+    borderRadius: 12,
+    padding: 10,
+    paddingTop: 6,
+    paddingBottom: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+    width: "100%",
   },
-
   filterParameters: {
-    padding: 10,
-    borderRadius: 5,
-    borderWidth: 0.2,
+    padding: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
+    backgroundColor: colorThemes.background,
+    minWidth: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    height: 36,
   },
-
   selectedParameters: {
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: "black",
+    padding: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    height: 36,
   },
   selectedText: {
-    color: "white",
+    color: colorThemes.textLight,
+    fontWeight: "600",
+    fontSize: 14,
   },
-
+  parameterText: {
+    color: colorThemes.textPrimary,
+    fontSize: 14,
+  },
   paramterBlock: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginVertical: 5,
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    marginBottom: 8,
+    marginTop: 6,
+    gap: 8,
+    width: "100%",
   },
-
   buttonsContainer: {
-    flexDirection: "column",
-    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: colorThemes.backgroundDark,
+    backgroundColor: colorThemes.background,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
   },
-
   bottomButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    gap: 5,
-    paddingHorizontal: 10,
+    gap: 16,
+    marginBottom: 8,
   },
-
   applyButton: {
-    padding: 10,
-    borderRadius: 5,
-    width: 100,
+    padding: 16,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   resetButton: {
-    padding: 10,
-    borderRadius: 5,
-    borderColor: "black",
-    borderWidth: 0.2,
-    width: 100,
+    padding: 16,
+    borderRadius: 10,
+    borderColor: colorThemes.greyLight,
+    borderWidth: 1,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: colorThemes.backgroundLight,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  filterCountContainer: {
+    alignItems: "center",
+    marginTop: 12,
+  },
+  filterCountText: {
+    fontSize: 14,
+    color: colorThemes.textSecondary,
+    fontWeight: "500",
   },
 });

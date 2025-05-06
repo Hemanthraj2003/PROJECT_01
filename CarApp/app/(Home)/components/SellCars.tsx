@@ -206,18 +206,8 @@ export default function SellCars() {
 
   return (
     <ScrollView>
-      <View
-        style={{ marginHorizontal: 15, marginTop: 15, paddingHorizontal: 10 }}
-      >
-        <Text
-          style={{
-            fontSize: 32,
-            fontWeight: "600",
-            color: colorThemes.primary2,
-          }}
-        >
-          Sell Your Car
-        </Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>Sell Your Car</Text>
       </View>
 
       <View style={{ gap: 10, padding: 15 }}>
@@ -413,18 +403,9 @@ export default function SellCars() {
       {/* Submit Button */}
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={colorThemes.textLight} />
         ) : (
-          <Text
-            style={{
-              color: "white",
-              fontWeight: "700",
-              letterSpacing: 2,
-              fontSize: 17,
-            }}
-          >
-            Submit For Approval
-          </Text>
+          <Text style={styles.submitButtonText}>Submit For Approval</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -432,15 +413,55 @@ export default function SellCars() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    marginHorizontal: 15,
+    marginTop: 15,
+    paddingHorizontal: 10,
+  },
+  headerText: {
+    fontSize: 32,
+    fontWeight: "600",
+    color: colorThemes.primary,
+    marginBottom: 5,
+  },
+  imageInstructionContainer: {
+    alignItems: "center",
+    marginVertical: 15,
+  },
+  imageInstructionText: {
+    color: colorThemes.textSecondary,
+    fontSize: 14,
+  },
+  uploadButtonContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  carouselContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
   uploadContainer: {
     height: 180,
     width: "88%",
-    backgroundColor: "#e8e8e8",
+    backgroundColor: colorThemes.backgroundLight,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 10,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
+    borderStyle: "dashed",
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  uploadText: {
+    color: colorThemes.textSecondary,
+    fontSize: 24,
+    fontWeight: "500",
   },
   uploadButton: {
     flexDirection: "row",
@@ -450,27 +471,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: "#e8e8e8",
+    backgroundColor: colorThemes.backgroundLight,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
+  },
+  uploadMoreText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   submitButton: {
-    padding: 15,
+    padding: 16,
     alignItems: "center",
-    // borderWidth: 2,
-    backgroundColor: colorThemes.primary0,
+    backgroundColor: colorThemes.primary,
     borderRadius: 10,
     margin: 15,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-
+  submitButtonText: {
+    color: colorThemes.textLight,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+    fontSize: 17,
+  },
   textInput: {
     marginHorizontal: 12,
     marginVertical: 12,
-    paddingHorizontal: 10,
-    paddingBottom: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
     fontSize: 16,
     borderBottomWidth: 1,
-    letterSpacing: 1.2,
-    color: colorThemes.primary2,
-    borderColor: colorThemes.grey,
+    letterSpacing: 1,
+    color: colorThemes.textPrimary,
+    borderColor: colorThemes.greyLight,
   },
 
   inputPicker: {

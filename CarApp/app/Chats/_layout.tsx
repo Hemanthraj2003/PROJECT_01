@@ -1,11 +1,10 @@
 import { Slot, useRouter } from "expo-router";
-import Navbar from "../components/Navbar";
 import { View, ActivityIndicator } from "react-native";
 import { useAuth } from "@/app/context/userContext";
 import { useEffect, useState } from "react";
 import colorThemes from "@/app/theme";
 
-export default function HomeRootLayout() {
+export default function ChatsLayout() {
   const { isAuthenticated, isLoading, validateSession } = useAuth();
   const [checking, setChecking] = useState(true);
   const router = useRouter();
@@ -13,9 +12,9 @@ export default function HomeRootLayout() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log("Checking authentication in home layout...");
+        console.log("Checking authentication in chats layout...");
         const isValid = await validateSession();
-
+        
         if (!isValid) {
           console.log("User not authenticated, redirecting to login");
           router.replace("/");
@@ -34,14 +33,7 @@ export default function HomeRootLayout() {
   // Show loading indicator while checking authentication
   if (isLoading || checking) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: colorThemes.background,
-        }}
-      >
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colorThemes.background }}>
         <ActivityIndicator size="large" color={colorThemes.primary} />
       </View>
     );
@@ -54,7 +46,6 @@ export default function HomeRootLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Navbar />
       <Slot />
     </View>
   );

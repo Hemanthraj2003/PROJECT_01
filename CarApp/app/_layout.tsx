@@ -8,19 +8,30 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoadingProvider } from "./context/loadingContext";
 import LoadingScreen from "../components/LoadingScreen";
 import { useLoading } from "./context/loadingContext";
+import colorThemes from "./theme";
 
 const Rootlayout = () => {
-  // this is used to set the thmeme of the PaperProvier to always Light...
-  const lightTheme = {
+  // Custom theme using colors from the logo
+  const appTheme = {
     ...DefaultTheme,
     dark: false,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colorThemes.primary,
+      accent: colorThemes.accent2,
+      background: colorThemes.background,
+      surface: colorThemes.background,
+      text: colorThemes.textPrimary,
+      placeholder: colorThemes.textSecondary,
+      backdrop: "rgba(0, 0, 0, 0.5)",
+      notification: colorThemes.error,
+    },
   };
-  console.log("Hello from Root");
 
   return (
     <AuthProvider>
       <LoadingProvider>
-        <PaperProvider theme={lightTheme}>
+        <PaperProvider theme={appTheme}>
           {/* system navbar with time and battery percentage */}
           <StatusBar style="light" backgroundColor="#000000" />
           <SafeAreaView style={{ flex: 1 }}>

@@ -2,8 +2,8 @@ import { DEVAPI, PRODAPI } from "@/app/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Production API URL
-// const API_URL = PRODAPI;
-const API_URL = DEVAPI;
+const API_URL = PRODAPI;
+// const API_URL = DEVAPI;
 
 export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
   console.log("fetching cars page", page);

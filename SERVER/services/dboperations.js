@@ -747,7 +747,7 @@ const getChatByChatId = async (req, res) => {
 
 const sendMessageToChatId = async (req, res) => {
   const body = req.body;
-  const { chatId, messageData } = body;
+  const { chatId, messageData, userId } = body;
   try {
     if (!chatId) {
       throw new Error("Chat Id is required to send Message.");
@@ -757,7 +757,7 @@ const sendMessageToChatId = async (req, res) => {
     }
     if (!messageData.message || !messageData.sentBy || !messageData.timeStamp) {
       throw new Error(
-        "Message data should contain message, snetBy and timeStamp..."
+        "Message data should contain message, sentBy and timeStamp..."
       );
     }
 
@@ -771,18 +771,38 @@ const sendMessageToChatId = async (req, res) => {
     }
     const chatData = chatDoc.data();
 
+    // Verify that the user sending the message is the owner of the chat
+    // This is a security check to prevent users from sending messages in other users' chats
+    let shouldUpdateUserId = false;
+    if (userId && messageData.sentBy === "user" && chatData.userId !== userId) {
+      console.log(
+        `User ID mismatch: Request userId=${userId}, Chat userId=${chatData.userId}`
+      );
+      // If there's a mismatch, update the chat's userId to match the current user
+      // This fixes any existing chats that might have incorrect userIds
+      console.log(
+        `Updating chat ${chatId} userId from ${chatData.userId} to ${userId}`
+      );
+      shouldUpdateUserId = true;
+    }
+
     let updatedChatData = {
       ...chatData,
       messages: [messageData, ...chatData.messages],
       lastMessageAt: messageData.timeStamp,
     };
 
+    // Update the userId if needed
+    if (shouldUpdateUserId && userId) {
+      updatedChatData.userId = userId;
+    }
+
     if (messageData.sentBy === "user") {
       updatedChatData.readByAdmin = false;
       updatedChatData.readByUser = true;
-    } 
+    }
     if (messageData.sentBy === "admin") {
-console.log("trying to et the admin message...");
+      console.log("trying to et the admin message...");
 
       updatedChatData.readByUser = false;
       updatedChatData.readByAdmin = true;
@@ -846,10 +866,10 @@ const getUserChats = async (req, res) => {
   const { currentPage = 1, pageSize = 10 } = req.body;
   const userId = req.params.userId; // get the userId from the request params
   const offset = (currentPage - 1) * pageSize;
-  const chatsRef = db.collection("CHATS")
-  .where("userId", "==", userId)
-  .where("lastMessageAt", "!=", null);
-
+  const chatsRef = db
+    .collection("CHATS")
+    .where("userId", "==", userId)
+    .where("lastMessageAt", "!=", null);
 
   try {
     if (!currentPage || !pageSize || !userId) {

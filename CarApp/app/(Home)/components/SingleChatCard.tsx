@@ -5,6 +5,8 @@ import colorThemes, { DEVAPI } from "@/app/theme";
 import { fetchCarsById } from "../Services/backendoperations";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 type ChatMessage = {
   sentBy: "admin" | "user";
@@ -51,65 +53,71 @@ const SingleChatCard = ({ chat }: chatProps) => {
     });
   };
 
+  const isUnread = !chat.readByUser;
+  const lastMessage = chat.messages[0]?.message || "No messages yet";
+  const lastMessageTime = dayjs(chat.lastMessageAt).format("DD MMM");
+  const hasImage = carData?.images?.[0] !== undefined;
+
   return (
-    <TouchableOpacity onPress={openChat}>
+    <TouchableOpacity
+      onPress={openChat}
+      style={styles.touchable}
+      activeOpacity={0.7}
+    >
       <View style={styles.container}>
-        <View>
-          <Image
-            source={{
-              uri: carData?.images?.[0] || "https://via.placeholder.com/70",
-            }}
-            style={{
-              width: 70,
-              height: 70,
-              borderRadius: 10,
-              marginRight: 4,
-              backgroundColor: "#e0e0e0",
-            }}
-            resizeMode="cover"
-          />
-        </View>
-        <View style={styles.contentPart}>
-          <View>
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: chat.readByUser ? colorThemes.grey : "black",
+        <View style={styles.imageContainer}>
+          {hasImage ? (
+            <Image
+              source={{
+                uri: carData?.images?.[0],
               }}
+              style={styles.carImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <LinearGradient
+              colors={[colorThemes.accent2, colorThemes.accent1]}
+              style={styles.placeholderContainer}
             >
-              {carData.carBrand} - {carData.carModel}
-            </Text>
-          </View>
-          {/*  MESSAGE PART [>_] */}
-          <View style={styles.latestText}>
+              <Ionicons name="car" size={28} color={colorThemes.textLight} />
+            </LinearGradient>
+          )}
+        </View>
+
+        <View style={styles.contentPart}>
+          <View style={styles.headerRow}>
             <Text
-              ellipsizeMode="tail"
               numberOfLines={1}
-              style={[
-                styles.messageText,
-                {
-                  color: chat.readByUser
-                    ? colorThemes.grey
-                    : colorThemes.primary1,
-                },
-              ]}
+              ellipsizeMode="tail"
+              style={[styles.carTitle, isUnread && styles.unreadText]}
             >
-              {chat.messages[0]?.message || "No messages yet"}
+              {carData.carBrand} {carData.carModel}
             </Text>
-            <Text
-              style={[
-                styles.messageTime,
-                {
-                  color: chat.readByUser
-                    ? colorThemes.grey
-                    : colorThemes.primary1,
-                },
-              ]}
-            >
-              {dayjs(chat.lastMessageAt).format("DD MMM")}
+
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceText}>
+                ₹
+                {carData.exceptedPrice
+                  ? carData.exceptedPrice.toLocaleString()
+                  : ""}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.latestText}>
+            <View style={styles.messageContainer}>
+              {isUnread && <View style={styles.messageDot} />}
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={[styles.messageText, isUnread && styles.unreadText]}
+              >
+                {lastMessage}
+              </Text>
+            </View>
+
+            <Text style={[styles.messageTime, isUnread && styles.unreadText]}>
+              {lastMessageTime}
             </Text>
           </View>
         </View>
@@ -121,11 +129,66 @@ const SingleChatCard = ({ chat }: chatProps) => {
 export default SingleChatCard;
 
 const styles = StyleSheet.create({
+  touchable: {
+    borderRadius: 12,
+    overflow: "hidden",
+  },
   container: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 10,
-    minHeight: 60,
+    gap: 12,
+    minHeight: 80,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  carImage: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colorThemes.backgroundDark,
+  },
+  placeholderContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  contentPart: {
+    flex: 1,
+    paddingVertical: 6,
+    justifyContent: "space-between",
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  carTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: colorThemes.textPrimary,
+    flex: 1,
+    marginRight: 8,
+  },
+  priceContainer: {
+    backgroundColor: colorThemes.backgroundDark,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  priceText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colorThemes.primary,
   },
   latestText: {
     flexDirection: "row",
@@ -135,20 +198,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-
+  messageContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  messageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colorThemes.primary,
+  },
   messageText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
+    color: colorThemes.textSecondary,
   },
   messageTime: {
-    // flexShrink: 0,
     fontSize: 12,
     color: colorThemes.grey,
-    // alignSelf: "flex-end",
   },
-  contentPart: {
-    flex: 1,
-    padding: 5,
-    justifyContent: "space-between",
+  unreadText: {
+    color: colorThemes.primary,
+    fontWeight: "500",
   },
 });
