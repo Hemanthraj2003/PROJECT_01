@@ -154,6 +154,29 @@ export const postCarForApproval = async (carData: any) => {
 };
 
 // USER RELATEDED METHODS
+
+export const fetchUserById = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Update the user data in AsyncStorage
+      await AsyncStorage.setItem("userDetails", JSON.stringify(data.data));
+      return data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return null;
+  }
+};
 export const registerNewUser = async (userInfo: any) => {
   const dataToPost = {
     ...userInfo,

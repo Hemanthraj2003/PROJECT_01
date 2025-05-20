@@ -605,27 +605,49 @@ const updateCarStatus = async (req, res) => {
         }
 
         const userData = userDoc.data();
-        // Remove from onSaleCars
-        const updatedOnSaleCars = userData.onSaleCars.filter(
-          (carId) => carId !== id
-        );
+
+        // Get the current car status before the update
+        const currentStatus = carData.carStatus;
 
         // Update relevant arrays based on status
         if (status === "sold") {
+          // When marking as sold, remove from onSaleCars and add to soldCars
+          const updatedOnSaleCars = userData.onSaleCars.filter(
+            (carId) => carId !== id
+          );
+
           transaction.update(userRef, {
             onSaleCars: updatedOnSaleCars,
             soldCars: admin.firestore.FieldValue.arrayUnion(id),
           });
-        } else if (status === "approved") {
-          // For approved cars, keep them in onSaleCars
-          transaction.update(userRef, {
-            onSaleCars: admin.firestore.FieldValue.arrayUnion(id),
-          });
-        } else {
-          // For rejected cars
+
+          console.log(
+            `Car ${id} marked as sold: Removed from onSaleCars, added to soldCars for user ${postedBy}`
+          );
+        } else if (status === "approved" && currentStatus === "pending") {
+          // Only add to onSaleCars if it's not already there
+          // This prevents duplicate entries
+          if (!userData.onSaleCars.includes(id)) {
+            transaction.update(userRef, {
+              onSaleCars: admin.firestore.FieldValue.arrayUnion(id),
+            });
+            console.log(
+              `Car ${id} approved: Added to onSaleCars for user ${postedBy}`
+            );
+          }
+        } else if (status === "rejected") {
+          // For rejected cars, remove from onSaleCars
+          const updatedOnSaleCars = userData.onSaleCars.filter(
+            (carId) => carId !== id
+          );
+
           transaction.update(userRef, {
             onSaleCars: updatedOnSaleCars,
           });
+
+          console.log(
+            `Car ${id} rejected: Removed from onSaleCars for user ${postedBy}`
+          );
         }
       });
     }

@@ -45,7 +45,8 @@ const colorThemes = {
   primary2: "#C96C1A", // Replaced with amber/brown from logo
 };
 
-const PRODAPI = "http://103.194.228.71:5000";
+// const PRODAPI = "http://103.194.228.71:5000";
+const PRODAPI = "http://192.168.0.102:5000";
 const DEVAPI = "http://192.168.0.106:5000";
 export default colorThemes;
 

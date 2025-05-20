@@ -34,6 +34,7 @@ export default function BuyCars() {
   // dumbway of creating the filter paramters
 
   // price range parameters
+  const [pr0, setpr0] = useState<boolean>(false); // < 1L
   const [pr1, setpr1] = useState<boolean>(false);
   const [pr2, setpr2] = useState<boolean>(false);
   const [pr3, setpr3] = useState<boolean>(false);
@@ -66,6 +67,7 @@ export default function BuyCars() {
 
   useEffect(() => {
     const hasActiveFilters =
+      pr0 ||
       pr1 ||
       pr2 ||
       pr3 ||
@@ -81,7 +83,7 @@ export default function BuyCars() {
       tr2;
 
     setApplyEnabled(hasActiveFilters);
-  }, [pr1, pr2, pr3, ft1, ft2, ft3, ft4, ft5, mr1, mr2, mr3, tr1, tr2]);
+  }, [pr0, pr1, pr2, pr3, ft1, ft2, ft3, ft4, ft5, mr1, mr2, mr3, tr1, tr2]);
 
   const getData = async (reset = false) => {
     if (loading || (!hasMore && !reset)) return;
@@ -162,6 +164,7 @@ export default function BuyCars() {
   }, []);
 
   const clearFilterParams = () => {
+    setpr0(false);
     setpr1(false);
     setpr2(false);
     setpr3(false);
@@ -182,6 +185,7 @@ export default function BuyCars() {
 
     // Price Range filters
     const priceConditions = [];
+    if (pr0) priceConditions.push([0, 100000]);
     if (pr1) priceConditions.push([100000, 300000]);
     if (pr2) priceConditions.push([300000, 600000]);
     if (pr3) priceConditions.push([600000, Number.MAX_SAFE_INTEGER]);
@@ -211,22 +215,30 @@ export default function BuyCars() {
       });
     }
 
-    // Mileage Range filters
-    const kmConditions = [];
-    if (mr1) kmConditions.push({ condition: "<=", value: 50000 });
-    if (mr2) kmConditions.push({ condition: "<=", value: 100000 });
-    if (mr3) kmConditions.push({ condition: ">=", value: 100000 });
+    // KM Driven filters
+    const kmRanges = [];
+    if (mr1) kmRanges.push([0, 50000]);
+    if (mr2) kmRanges.push([50000, 100000]);
+    if (mr3) kmRanges.push([100000, Number.MAX_SAFE_INTEGER]);
 
-    if (kmConditions.length > 0) {
-      const min = kmConditions.find((c) => c.condition === ">=")?.value ?? 0;
-      const max = kmConditions
-        .filter((c) => c.condition === "<=")
-        .reduce((a, b) => Math.max(a, b.value), Number.MAX_SAFE_INTEGER);
-
-      filterParams.push(
-        { field: "km", condition: ">=", value: min },
-        { field: "km", condition: "<=", value: max }
-      );
+    if (kmRanges.length > 0) {
+      // If only one range is selected, use that range directly
+      if (kmRanges.length === 1) {
+        const [min, max] = kmRanges[0];
+        filterParams.push(
+          { field: "km", condition: ">=", value: min },
+          { field: "km", condition: "<=", value: max }
+        );
+      }
+      // If multiple ranges are selected, we need to find the min and max values
+      else {
+        const min = Math.min(...kmRanges.map((range) => range[0]));
+        const max = Math.max(...kmRanges.map((range) => range[1]));
+        filterParams.push(
+          { field: "km", condition: ">=", value: min },
+          { field: "km", condition: "<=", value: max }
+        );
+      }
     }
 
     // Transmission Type filters
@@ -313,6 +325,22 @@ export default function BuyCars() {
               <View style={filterModal.filterSection}>
                 <Text style={filterModal.filterHeadings}>Price Range</Text>
                 <View style={filterModal.paramterBlock}>
+                  <TouchableOpacity onPress={() => setpr0((prev) => !prev)}>
+                    {pr0 ? (
+                      <LinearGradient
+                        colors={[colorThemes.primary, colorThemes.accent2]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={filterModal.selectedParameters}
+                      >
+                        <Text style={filterModal.selectedText}>{"< 1L"}</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={filterModal.filterParameters}>
+                        <Text style={filterModal.parameterText}>{"< 1L"}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
                   <TouchableOpacity onPress={() => setpr1((prev) => !prev)}>
                     {pr1 ? (
                       <LinearGradient
@@ -325,14 +353,7 @@ export default function BuyCars() {
                       </LinearGradient>
                     ) : (
                       <View style={filterModal.filterParameters}>
-                        <Text
-                          style={{
-                            color: colorThemes.textPrimary,
-                            fontSize: 14,
-                          }}
-                        >
-                          1L - 3L
-                        </Text>
+                        <Text style={filterModal.parameterText}>1L - 3L</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -348,14 +369,7 @@ export default function BuyCars() {
                       </LinearGradient>
                     ) : (
                       <View style={filterModal.filterParameters}>
-                        <Text
-                          style={{
-                            color: colorThemes.textPrimary,
-                            fontSize: 14,
-                          }}
-                        >
-                          3L - 6L
-                        </Text>
+                        <Text style={filterModal.parameterText}>3L - 6L</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -371,14 +385,7 @@ export default function BuyCars() {
                       </LinearGradient>
                     ) : (
                       <View style={filterModal.filterParameters}>
-                        <Text
-                          style={{
-                            color: colorThemes.textPrimary,
-                            fontSize: 14,
-                          }}
-                        >
-                          6L - ...
-                        </Text>
+                        <Text style={filterModal.parameterText}>6L - ...</Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -475,9 +482,9 @@ export default function BuyCars() {
                 </View>
               </View>
 
-              {/* ///////////// Mileage Range ///////////////// */}
+              {/* ///////////// KM Driven ///////////////// */}
               <View style={filterModal.filterSection}>
-                <Text style={filterModal.filterHeadings}>Mileage Range</Text>
+                <Text style={filterModal.filterHeadings}>KM Driven</Text>
                 <View style={filterModal.paramterBlock}>
                   <TouchableOpacity onPress={() => setmr1((prev) => !prev)}>
                     {mr1 ? (
@@ -651,6 +658,7 @@ export default function BuyCars() {
                   <Text style={filterModal.filterCountText}>
                     {
                       [
+                        pr0,
                         pr1,
                         pr2,
                         pr3,
@@ -1007,7 +1015,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    paddingVertical: 2,
+    // paddingVertical: 8,
+    minHeight: 48,
     borderWidth: 1,
     borderColor: colorThemes.greyLight,
     borderRadius: 10,

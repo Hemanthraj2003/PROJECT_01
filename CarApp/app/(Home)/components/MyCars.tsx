@@ -5,11 +5,13 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
-import { fetchCarsById } from "../Services/backendoperations";
+import { fetchCarsById, fetchUserById } from "../Services/backendoperations";
 import { useLoading } from "@/app/context/loadingContext";
 import colorThemes from "@/app/theme";
 
@@ -18,7 +20,7 @@ export default function MyCars() {
   const [onSale, setOnSale] = useState<any>([]);
   const [bought, setBought] = useState<any>([]);
   const [sold, setSold] = useState<any>([]);
-  const { user } = useAuth();
+  const { user, forceSetUser } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -40,14 +42,62 @@ export default function MyCars() {
     }
   };
 
+  const refreshUserData = async () => {
+    if (!user || !user.id) {
+      console.error("Cannot refresh user data: No user ID available");
+      return false;
+    }
+
+    try {
+      // Fetch the latest user data from the database
+      const updatedUserData = await fetchUserById(user.id);
+
+      if (updatedUserData) {
+        // Force update the user context with the latest data
+        await forceSetUser();
+        console.log("User data refreshed successfully");
+        return true;
+      } else {
+        console.error("Failed to fetch updated user data");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      return false;
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
+
+    // First refresh the user data to get the latest car arrays
+    const userRefreshed = await refreshUserData();
+
+    // Then fetch the car details based on the updated user data
     await fetchCarDetails();
+
     setRefreshing(false);
+
+    // Log the refresh status
+    if (userRefreshed) {
+      console.log("Pull-to-refresh completed: User data and cars updated");
+    } else {
+      console.log("Pull-to-refresh completed: Only cars updated");
+    }
   };
 
   useEffect(() => {
-    fetchCarDetails();
+    // When component mounts, refresh user data and fetch car details
+    const initializeData = async () => {
+      // First try to refresh user data from the server
+      if (user && user.id) {
+        await refreshUserData();
+      }
+      // Then fetch car details
+      await fetchCarDetails();
+    };
+
+    initializeData();
   }, []);
 
   // Function to render list items
@@ -139,15 +189,34 @@ export default function MyCars() {
             data={onSale}
             renderItem={renderOnSaleCars}
             keyExtractor={(item) => item.id}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+                title="Refreshing user data..."
+                titleColor={colorThemes.textSecondary}
+              />
+            }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <View style={styles.emptyStateContainer}>
+          <ScrollView
+            contentContainerStyle={styles.emptyStateContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+              />
+            }
+          >
             <Text style={styles.emptyStateText}>No cars on sale</Text>
-          </View>
+            <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
+          </ScrollView>
         );
 
       case "bought":
@@ -156,15 +225,34 @@ export default function MyCars() {
             data={bought}
             renderItem={renderCarItem}
             keyExtractor={(item) => item.id}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+                title="Refreshing user data..."
+                titleColor={colorThemes.textSecondary}
+              />
+            }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <View style={styles.emptyStateContainer}>
+          <ScrollView
+            contentContainerStyle={styles.emptyStateContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+              />
+            }
+          >
             <Text style={styles.emptyStateText}>No bought cars</Text>
-          </View>
+            <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
+          </ScrollView>
         );
 
       case "sold":
@@ -173,15 +261,34 @@ export default function MyCars() {
             data={sold}
             renderItem={renderCarItem}
             keyExtractor={(item) => item.id}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+                title="Refreshing user data..."
+                titleColor={colorThemes.textSecondary}
+              />
+            }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContentContainer}
           />
         ) : (
-          <View style={styles.emptyStateContainer}>
+          <ScrollView
+            contentContainerStyle={styles.emptyStateContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colorThemes.primary, colorThemes.accent2]}
+                tintColor={colorThemes.primary}
+              />
+            }
+          >
             <Text style={styles.emptyStateText}>No sold cars</Text>
-          </View>
+            <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
+          </ScrollView>
         );
 
       default:
@@ -299,6 +406,12 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     color: colorThemes.textSecondary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: colorThemes.grey,
     textAlign: "center",
   },
   listContentContainer: {

@@ -106,7 +106,7 @@ export default function DeleteableCarousol({ images, setImages }: props) {
                   height: 10,
                 },
                 currentIndex === index && {
-                  backgroundColor: colorThemes.primary2,
+                  backgroundColor: colorThemes.primary,
                   width: 12,
                   height: 12,
                 },
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     top: 20,
     elevation: 1,
     right: 20,
-    backgroundColor: colorThemes.primary2,
+    backgroundColor: colorThemes.primary,
     zIndex: 100,
     padding: 8,
     borderRadius: 10,

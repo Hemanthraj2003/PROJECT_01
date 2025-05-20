@@ -36,6 +36,7 @@ type Car = {
   location: string;
   modelYear: string;
   ownerName: string;
+  ownerNumber: string;
   phoneNumber: string;
   postedBy: string;
   postedDate: string;
@@ -327,7 +328,7 @@ export default function BuyCarPage() {
             <View style={[styles.overviewBlocks, { gap: 4, marginStart: 5 }]}>
               <Feather name="users" size={22} color="#5c5c5c" />
               <Text style={[styles.greytext, { fontSize: 14 }]}>
-                Owner - {car.ownerName}
+                Owner - {car.ownerNumber}
               </Text>
             </View>
 

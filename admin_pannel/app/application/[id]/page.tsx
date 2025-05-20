@@ -92,6 +92,7 @@ export default function CarDetails() {
             : "Marking as sold"
         } car...`
       );
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API}/cars/${id}/status`,
         {
@@ -107,11 +108,29 @@ export default function CarDetails() {
 
       if (data.success) {
         setCar((prev) => (prev ? { ...prev, carStatus: newStatus } : null));
+
+        // Create a more detailed success message based on the status
+        let statusMessage = "";
+        if (newStatus === "sold") {
+          statusMessage =
+            ". Car has been removed from user's onSaleCars and added to soldCars.";
+        } else if (newStatus === "approved") {
+          statusMessage =
+            ". Car has been approved and is now visible to buyers.";
+        } else if (newStatus === "rejected") {
+          statusMessage =
+            ". Car has been rejected and removed from user's onSaleCars.";
+        }
+
         setSnackbar({
           open: true,
-          message: `Car successfully ${newStatus}`,
+          message: `Car successfully marked as ${newStatus}${statusMessage}`,
           severity: "success",
         });
+
+        console.log(
+          `Car ${id} status updated to ${newStatus}. User collections updated.`
+        );
       } else {
         throw new Error(data.message || "Failed to update status");
       }
