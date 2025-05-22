@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { fetchAllFilteredCars } from "../Services/backendoperations";
 import colorThemes from "@/app/theme";
 import { useLoading } from "@/app/context/loadingContext";
+import { typography } from "@/app/theme";
 
 export default function BuyCars() {
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -871,7 +872,9 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   noCarsText: {
-    fontSize: 18,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textSecondary,
     textAlign: "center",
   },
@@ -911,9 +914,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   viewText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textLight,
-    fontSize: 14,
-    fontWeight: "600",
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -927,9 +931,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   priceText: {
-    paddingVertical: 3,
-    fontWeight: "700",
-    fontSize: 20,
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.primary,
   },
   yearBadge: {
@@ -939,15 +943,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   yearText: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
     color: colorThemes.textPrimary,
   },
   carTitle: {
-    fontSize: 16,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textPrimary,
     marginBottom: 8,
-    fontWeight: "600",
   },
   carDetailsContainer: {
     flexDirection: "row",
@@ -968,9 +974,9 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   carDetailText: {
-    fontSize: 12,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.caption,
     color: colorThemes.textLight,
-    fontWeight: "500",
   },
   loadingContainer: {
     padding: 24,
@@ -978,9 +984,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
+    marginTop: 12,
   },
   loadMoreButton: {
     marginVertical: 20,
@@ -999,10 +1007,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadMoreText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textLight,
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
   searchContainer: {
     flexDirection: "row",
@@ -1030,7 +1039,9 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 8,
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
   },
   filterButton: {
@@ -1077,11 +1088,12 @@ const filterModal = StyleSheet.create({
     zIndex: 10,
   },
   modalTitle: {
-    fontWeight: "800",
-    fontSize: 24,
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
+    letterSpacing: typography.letterSpacing.tight,
     color: colorThemes.textLight,
     flex: 1,
-    letterSpacing: 0.5,
   },
   closeButton: {
     padding: 8,
@@ -1093,11 +1105,11 @@ const filterModal = StyleSheet.create({
     justifyContent: "center",
   },
   closeX: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    color: colorThemes.textLight,
     textAlign: "center",
     marginTop: -3,
-    color: colorThemes.textLight,
   },
   scrollView: {
     width: "100%",
@@ -1109,8 +1121,9 @@ const filterModal = StyleSheet.create({
     width: "100%",
   },
   filterHeadings: {
-    fontWeight: "700",
-    fontSize: 16,
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.subtitle2,
+    lineHeight: typography.lineHeights.subtitle2,
     color: colorThemes.primary,
     marginBottom: 4,
     marginTop: 4,
@@ -1165,13 +1178,16 @@ const filterModal = StyleSheet.create({
     height: 36,
   },
   selectedText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textLight,
-    fontWeight: "600",
-    fontSize: 14,
   },
   parameterText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textPrimary,
-    fontSize: 14,
   },
   paramterBlock: {
     flexDirection: "row",
@@ -1233,8 +1249,9 @@ const filterModal = StyleSheet.create({
     marginTop: 12,
   },
   filterCountText: {
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
-    fontWeight: "500",
   },
 });

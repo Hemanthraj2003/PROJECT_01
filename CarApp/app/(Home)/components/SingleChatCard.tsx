@@ -7,6 +7,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { typography } from "@/app/theme";
 
 type ChatMessage = {
   sentBy: "admin" | "user";
@@ -173,8 +174,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   carTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle2,
+    lineHeight: typography.lineHeights.subtitle2,
     color: colorThemes.textPrimary,
     flex: 1,
     marginRight: 8,
@@ -186,8 +188,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   priceText: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
     color: colorThemes.primary,
   },
   latestText: {
@@ -211,16 +214,20 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.primary,
   },
   messageText: {
+    fontFamily: typography.fonts.body,
     flex: 1,
-    fontSize: 13,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
   },
   messageTime: {
-    fontSize: 12,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.small,
+    lineHeight: typography.lineHeights.small,
     color: colorThemes.grey,
   },
   unreadText: {
+    fontFamily: typography.fonts.bodyBold,
     color: colorThemes.primary,
-    fontWeight: "500",
   },
 });

@@ -13,7 +13,7 @@ import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById, fetchUserById } from "../Services/backendoperations";
 import { useLoading } from "@/app/context/loadingContext";
-import colorThemes from "@/app/theme";
+import colorThemes, { typography } from "@/app/theme";
 
 export default function MyCars() {
   const [value, setValue] = useState("onSale");
@@ -374,19 +374,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   carTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textPrimary,
     marginBottom: 2,
   },
   carPrice: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.subtitle2,
+    lineHeight: typography.lineHeights.subtitle2,
     color: colorThemes.primary,
     marginBottom: 2,
   },
   carInfo: {
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
     marginTop: 2,
   },
@@ -394,8 +398,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: "500",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
   },
   emptyStateContainer: {
     flex: 1,
@@ -404,13 +409,17 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyStateText: {
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
     textAlign: "center",
     marginBottom: 8,
   },
   emptyStateSubtext: {
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.grey,
     textAlign: "center",
   },

@@ -1,0 +1,44 @@
+# CarApp UI/UX & Error Handling TODO
+
+## 1. Visual Hierarchy & Typography
+- [ ] Audit all screens for consistent use of font family [use a combination of Titillium Web and Inter].
+- [ ] Standardize font sizes and weights for headings, subheadings, and body text.
+- [ ] Make section titles (e.g., "Owner Information", "Pricing & Specifications", chat headers) bolder and larger for clear separation.
+- [ ] Ensure button text is bold and easily readable.
+- [ ] Use a clear visual hierarchy for cards, lists, and forms (spacing, font size, !important color contrast).
+- [ ] Enforce use of colorTheme file for all text and background colors (no hardcoded values).
+- [ ] Add global styles or theme overrides to ensure font and color consistency.
+
+## 2. Error Handling & User Notification
+- [ ] Implement global error boundary to catch and display errors (show a fallback UI or error screen if the app crashes).
+- [ ] Add Android Toast (or similar notification) for transient errors (e.g., no internet connection, failed API calls).
+- [ ] Show inline error messages for form validation errors (e.g., invalid input, required fields).
+- [ ] Display user-friendly error messages for network/API errors (e.g., "Unable to connect. Please check your internet connection.").
+- [ ] Add loading and error states to all async actions (e.g., car list fetch, chat send, image upload).
+- [ ] Add a global network status listener to notify users of connectivity changes.
+
+## 3. Empty & Loading States
+- [ ] Add visually appealing empty states for lists (e.g., "No cars found", "No chats yet") with icons or illustrations.
+    link for icons https://icons.expo.fyi/Index
+- [ ] Use skeleton loaders or spinners for loading states.
+
+## 4. Accessibility & Responsiveness
+- [ ] Ensure all touch targets are at least 44x44px.
+- [ ] Add accessibility labels to all actionable elements (buttons, inputs, icons).
+- [ ] Test and adjust layouts for different device sizes.
+
+## 5. Consistency & Polish
+- [ ] Standardize spacing (padding/margin) between elements across all screens.
+- [ ] Use consistent card and button styles (rounded corners, shadows, color usage).
+- [ ] Ensure all images have consistent aspect ratios and rounded corners.
+
+## 6. Miscellaneous
+- [ ] Review and update color usage for contrast and brand consistency.
+- [ ] Add status badges (e.g., "Approved", "Pending") with color coding where relevant.
+- [ ] Test all flows for error handling and user feedback.
+
+---
+
+**Prioritize the most visible and impactful changes first (typography, error notifications, loading/empty states).**
+
+Add more items as needed during implementation.

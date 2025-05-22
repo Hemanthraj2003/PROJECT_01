@@ -6,8 +6,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  Platform,
+  Animated,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { StatusBar } from "expo-status-bar";
 import colorThemes from "@/app/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -16,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/app/context/userContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { typography } from "@/app/theme";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
@@ -68,36 +72,44 @@ const Navbar = () => {
       <LinearGradient
         colors={[colorThemes.primary, colorThemes.accent2]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={style.navbar}
       >
-        <View style={style.logoContainer}>
-          <Image
-            source={require("@/assets/images/icon2.png")}
-            style={style.logoImage}
-            resizeMode="cover"
-          />
-        </View>
-
-        <View style={style.navActions}>
-          <TouchableOpacity
-            style={style.iconButton}
-            onPress={() => router.push("/Chats")}
-          >
-            <Ionicons
-              name="chatbox-ellipses-outline"
-              size={28}
-              color={colorThemes.textLight}
+        <View style={style.navContent}>
+          <View style={style.logoContainer}>
+            <Image
+              source={require("@/assets/images/icon2.png")}
+              style={style.logoImage}
+              resizeMode="contain"
             />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={style.iconButton}
-            onPress={() => setVisible(true)}
-          >
-            <View style={style.userIconContainer}>
-              <AntDesign name="user" size={18} color={colorThemes.textLight} />
-            </View>
-          </TouchableOpacity>
+          </View>
+
+          <View style={style.navActions}>
+            <TouchableOpacity
+              style={style.iconButton}
+              onPress={() => router.push("/Chats")}
+            >
+              <Ionicons
+                name="chatbox-ellipses-outline"
+                size={26}
+                color={colorThemes.textLight}
+                style={{ opacity: 0.9 }}
+              />
+              <View style={style.badge} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={style.iconButton}
+              onPress={() => setVisible(true)}
+            >
+              <AntDesign
+                name="user"
+                size={24}
+                color={colorThemes.textLight}
+                style={{ opacity: 0.9 }}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
@@ -204,51 +216,51 @@ const Navbar = () => {
 
 const style = StyleSheet.create({
   navbar: {
+    height: 70,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  navContent: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 0,
-    height: 56,
-    // Add a subtle shadow for depth
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    paddingHorizontal: 16,
   },
   logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingStart: 20,
+    justifyContent: "center",
+    marginStart: 5,
   },
   logoImage: {
-    width: 120,
-    height: 40,
-  },
-  navHeading: {
-    color: colorThemes.textLight,
-    fontSize: 22,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    width: 110,
+    height: 57,
   },
   navActions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
-
-    paddingRight: 8,
+    gap: 20,
+    marginRight: 10,
   },
   iconButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1,
   },
-  userIconContainer: {
-    padding: 6,
-    borderRadius: 25,
-    borderWidth: 1.5,
-    borderColor: colorThemes.textLight,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  badge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    backgroundColor: colorThemes.accent1,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
   },
   modal: {
     margin: 20,
@@ -292,8 +304,9 @@ const style = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
     color: colorThemes.primary,
   },
   profileContainer: {
@@ -317,23 +330,26 @@ const style = StyleSheet.create({
     elevation: 5,
   },
   avatarText: {
-    fontSize: 36,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.textLight,
-    fontWeight: "bold",
   },
   infoSection: {
     marginBottom: 18,
   },
   label: {
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
     color: colorThemes.textSecondary,
     marginBottom: 4,
-    fontWeight: "500",
   },
   text: {
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
-    fontWeight: "400",
   },
   divider: {
     height: 1,
@@ -358,9 +374,10 @@ const style = StyleSheet.create({
     marginRight: 10,
   },
   logoutText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textLight,
-    fontSize: 16,
-    fontWeight: "600",
   },
 });
 export default Navbar;

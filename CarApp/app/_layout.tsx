@@ -9,8 +9,24 @@ import { LoadingProvider } from "./context/loadingContext";
 import LoadingScreen from "../components/LoadingScreen";
 import { useLoading } from "./context/loadingContext";
 import colorThemes from "./theme";
+import {
+  useFonts,
+  TitilliumWeb_200ExtraLight,
+  TitilliumWeb_300Light,
+  TitilliumWeb_400Regular,
+  TitilliumWeb_600SemiBold,
+  TitilliumWeb_700Bold,
+} from "@expo-google-fonts/titillium-web";
 
 const Rootlayout = () => {
+  const [fontsLoaded] = useFonts({
+    TitilliumWeb_200ExtraLight,
+    TitilliumWeb_300Light,
+    TitilliumWeb_400Regular,
+    TitilliumWeb_600SemiBold,
+    TitilliumWeb_700Bold,
+  });
+
   // Custom theme using colors from the logo
   const appTheme = {
     ...DefaultTheme,
@@ -28,12 +44,16 @@ const Rootlayout = () => {
     },
   };
 
+  if (!fontsLoaded) {
+    return <LoadingScreen visible={true} />;
+  }
+
   return (
     <AuthProvider>
       <LoadingProvider>
         <PaperProvider theme={appTheme}>
           {/* system navbar with time and battery percentage */}
-          <StatusBar style="light" backgroundColor="#000000" />
+          <StatusBar style="light" backgroundColor={colorThemes.primary} />
           <SafeAreaView style={{ flex: 1 }}>
             <Slot />
             <LoadingScreenWrapper />

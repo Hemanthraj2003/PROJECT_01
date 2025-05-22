@@ -21,8 +21,9 @@ import Navbar from "./Navbar";
 import { router, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/app/context/userContext";
 import { updateUserData } from "../Services/backendoperations";
-import colorThemes from "@/app/theme";
+import colorThemes, { typography } from "@/app/theme";
 import { startChat } from "@/app/Chats/chatServices";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Car = {
   carBrand: string;
@@ -49,6 +50,24 @@ interface Styles {
   container: ViewStyle;
   greytext: TextStyle;
   overviewBlocks: ViewStyle;
+  price: TextStyle;
+  model: TextStyle;
+  year: TextStyle;
+  specBlock: ViewStyle;
+  specText: TextStyle;
+  sectionContainer: ViewStyle;
+  sectionHeader: ViewStyle;
+  sectionTitle: TextStyle;
+  overviewText: TextStyle;
+  descriptionText: TextStyle;
+  contactText: TextStyle;
+  bottomBar: ViewStyle;
+  chatButton: ViewStyle;
+  chatGradient: ViewStyle;
+  chatContent: ViewStyle;
+  chatIcon: ViewStyle;
+  chatText: TextStyle;
+  likeButtonContainer: ViewStyle;
 }
 
 export default function BuyCarPage() {
@@ -148,7 +167,9 @@ export default function BuyCarPage() {
   return (
     <View style={{ flex: 1 }}>
       <Navbar />
-      <ScrollView style={{ padding: 5, backgroundColor: "#f5f5f5" }}>
+      <ScrollView
+        style={{ padding: 5, backgroundColor: colorThemes.backgroundLight }}
+      >
         {/* Image Carousel section */}
         <View
           style={{
@@ -208,7 +229,7 @@ export default function BuyCarPage() {
         {/* Car details */}
         <View
           style={{
-            backgroundColor: "white",
+            backgroundColor: colorThemes.background,
             marginVertical: 4,
             marginHorizontal: 10,
             elevation: 0.2,
@@ -216,21 +237,10 @@ export default function BuyCarPage() {
             borderRadius: 7,
           }}
         >
-          <Text style={{ fontSize: 20, fontWeight: 700 }}>
-            ₹ {car.exceptedPrice}
-          </Text>
-          <Text
-            style={{
-              fontSize: 15,
-              lineHeight: 30,
-              fontWeight: 500,
-              color: "#5c5c5c",
-            }}
-          >
-            {car.carModel}
-          </Text>
+          <Text style={[styles.price]}>₹ {car.exceptedPrice}</Text>
+          <Text style={[styles.model]}>{car.carModel}</Text>
 
-          <Text style={{ color: "#5c5c5c" }}>{car.modelYear}</Text>
+          <Text style={[styles.year]}>{car.modelYear}</Text>
 
           <View
             style={{
@@ -241,73 +251,47 @@ export default function BuyCarPage() {
               alignItems: "center",
               margin: "auto",
               borderTopWidth: 0.21,
-              borderTopColor: "#5c5c5c",
+              borderTopColor: colorThemes.greyLight,
             }}
           >
             {/* Fuel Type */}
-            <View style={{ alignItems: "center", flex: 1, gap: 5 }}>
-              <Ionicons name="funnel-outline" size={22} color={"#5c5c5c"} />
-              <Text
-                style={{
-                  color: "#5c5c5c",
-                  minWidth: 60,
-                  textAlign: "center",
-                }}
-              >
-                {car.fuelType}
-              </Text>
+            <View style={styles.specBlock}>
+              <Ionicons
+                name="funnel-outline"
+                size={22}
+                color={colorThemes.textSecondary}
+              />
+              <Text style={styles.specText}>{car.fuelType}</Text>
             </View>
 
             {/* Mileage */}
-            <View style={{ alignItems: "center", flex: 1, gap: 5 }}>
-              <Ionicons name="speedometer-outline" size={22} />
-              <Text
-                style={{
-                  color: "#5c5c5c",
-                  minWidth: 60,
-                  textAlign: "center",
-                }}
-              >
+            <View style={styles.specBlock}>
+              <Ionicons
+                name="speedometer-outline"
+                size={22}
+                color={colorThemes.textSecondary}
+              />
+              <Text style={styles.specText}>
                 {(car.km / 1000).toFixed(0)}k km
               </Text>
             </View>
 
             {/* Gear Type */}
-            <View style={{ alignItems: "center", flex: 1, gap: 5 }}>
-              <EvilIcons name="gear" size={22} color="black" />
-              <Text
-                style={{
-                  color: "#5c5c5c",
-                  minWidth: 60,
-                  textAlign: "center",
-                }}
-              >
-                {car.transmissionType}
-              </Text>
+            <View style={styles.specBlock}>
+              <EvilIcons
+                name="gear"
+                size={22}
+                color={colorThemes.textSecondary}
+              />
+              <Text style={styles.specText}>{car.transmissionType}</Text>
             </View>
           </View>
         </View>
 
         {/* Overview */}
-        <View
-          style={{
-            backgroundColor: "white",
-            marginHorizontal: 10,
-            marginVertical: 15,
-            borderRadius: 7,
-            elevation: 1,
-          }}
-        >
-          <View
-            style={{
-              padding: 10,
-              borderBottomWidth: 0.21,
-              borderColor: "#5c5c5c",
-            }}
-          >
-            <Text style={{ fontWeight: 600, color: "#5c5c5c", fontSize: 18 }}>
-              Overview
-            </Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Overview</Text>
           </View>
 
           <View style={{ padding: 10, gap: 10 }}>
@@ -316,20 +300,22 @@ export default function BuyCarPage() {
               <EvilIcons
                 name="calendar"
                 size={28}
-                color="#5c5c5c"
+                color={colorThemes.textSecondary}
                 style={{ marginTop: -4 }}
               />
-              <Text style={[styles.greytext, { fontSize: 14 }]}>
+              <Text style={styles.overviewText}>
                 Date - {new Date().toLocaleDateString()}
               </Text>
             </View>
 
             {/*  Owner */}
             <View style={[styles.overviewBlocks, { gap: 4, marginStart: 5 }]}>
-              <Feather name="users" size={22} color="#5c5c5c" />
-              <Text style={[styles.greytext, { fontSize: 14 }]}>
-                Owner - {car.ownerNumber}
-              </Text>
+              <Feather
+                name="users"
+                size={22}
+                color={colorThemes.textSecondary}
+              />
+              <Text style={styles.overviewText}>Owner - {car.ownerNumber}</Text>
             </View>
 
             {/* Location */}
@@ -338,81 +324,53 @@ export default function BuyCarPage() {
                 name="location-outline"
                 size={28}
                 style={{ marginTop: -4 }}
-                color="#5c5c5c"
+                color={colorThemes.textSecondary}
               />
-              <Text style={[styles.greytext]}>{car.location}</Text>
+              <Text style={styles.overviewText}>{car.location}</Text>
             </View>
           </View>
         </View>
 
         {/* Description */}
-        <View
-          style={{
-            backgroundColor: "white",
-            marginHorizontal: 10,
-            marginVertical: 15,
-            borderRadius: 7,
-            elevation: 1,
-          }}
-        >
-          <View
-            style={{
-              padding: 10,
-              borderBottomWidth: 0.21,
-              borderColor: "#5c5c5c",
-            }}
-          >
-            <Text style={{ fontWeight: 600, color: "#5c5c5c", fontSize: 18 }}>
-              Description
-            </Text>
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Description</Text>
           </View>
 
           <View style={{ padding: 10, gap: 10 }}>
-            {/* Description */}
-            <Text>{car.description}</Text>
-            <Text style={{ color: "blue" }}>Contact for more information</Text>
+            <Text style={styles.descriptionText}>{car.description}</Text>
+            <Text style={styles.contactText}>Contact for more information</Text>
           </View>
         </View>
       </ScrollView>
 
       {/* Interested Button */}
-      <View
-        style={{
-          paddingVertical: 10,
-          paddingHorizontal: 15,
-          height: 64,
-          flexDirection: "row",
-        }}
-      >
-        <TouchableOpacity
-          onPress={handleInterested}
-          style={{
-            backgroundColor: colorThemes.primary2,
-            flex: 1,
-            borderRadius: 10,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <View>
-            {/* <> */}
-            <Text style={{ fontSize: 20, color: "white" }}>Chat With Us</Text>
-          </View>
+      <View style={styles.bottomBar}>
+        <TouchableOpacity onPress={handleInterested} style={styles.chatButton}>
+          <LinearGradient
+            colors={[colorThemes.primary, colorThemes.accent2]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.chatGradient}
+          >
+            <View style={styles.chatContent}>
+              <Ionicons
+                name="chatbubble-outline"
+                size={24}
+                color={colorThemes.textLight}
+                style={styles.chatIcon}
+              />
+              <Text style={styles.chatText}>Chat With Us</Text>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
-        {/* </Pressable> */}
 
-        <View
-          style={{
-            width: 70,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
+        <View style={styles.likeButtonContainer}>
           <TouchableOpacity onPress={toggleLikedCars}>
             <Ionicons
               name={liked ? "heart" : "heart-outline"}
               size={40}
-              color={colorThemes.primary2}
+              color={colorThemes.primary}
               style={{ paddingRight: 10 }}
             />
           </TouchableOpacity>
@@ -422,18 +380,130 @@ export default function BuyCarPage() {
   );
 }
 
-const styles = StyleSheet.create<Styles>({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   greytext: {
-    color: "#5c5c5c",
+    color: colorThemes.textSecondary,
   },
   overviewBlocks: {
     flexDirection: "row",
     alignItems: "center",
     padding: 5,
+  },
+  price: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
+    color: colorThemes.textPrimary,
+  },
+  model: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
+    color: colorThemes.textSecondary,
+    marginVertical: 4,
+  },
+  year: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
+    color: colorThemes.textSecondary,
+  },
+  specBlock: {
+    alignItems: "center",
+    flex: 1,
+    gap: 5,
+  },
+  specText: {
+    color: colorThemes.textSecondary,
+    minWidth: 60,
+    textAlign: "center",
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
+  },
+  sectionContainer: {
+    backgroundColor: colorThemes.background,
+    marginHorizontal: 10,
+    marginVertical: 15,
+    borderRadius: 7,
+    elevation: 1,
+  },
+  sectionHeader: {
+    padding: 10,
+    borderBottomWidth: 0.21,
+    borderColor: colorThemes.greyLight,
+  },
+  sectionTitle: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
+    color: colorThemes.textPrimary,
+  },
+  overviewText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
+    color: colorThemes.textSecondary,
+  },
+  descriptionText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
+    color: colorThemes.textPrimary,
+  },
+  contactText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
+    color: colorThemes.primary,
+  },
+  bottomBar: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    height: 64,
+    flexDirection: "row",
+    backgroundColor: colorThemes.background,
+    borderTopWidth: 1,
+    borderTopColor: colorThemes.backgroundDark,
+  },
+  chatButton: {
+    flex: 1,
+    borderRadius: 10,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  chatGradient: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  chatContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatIcon: {
+    marginRight: 8,
+  },
+  chatText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
+    color: colorThemes.textLight,
+    letterSpacing: typography.letterSpacing.wide,
+  },
+  likeButtonContainer: {
+    width: 70,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

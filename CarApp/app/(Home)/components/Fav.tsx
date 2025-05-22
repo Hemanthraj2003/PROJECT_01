@@ -10,11 +10,12 @@ import {
 } from "react-native-paper";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById } from "../Services/backendoperations";
 import { useRouter } from "expo-router";
-import colorThemes from "@/app/theme";
+import colorThemes, { typography } from "@/app/theme";
 
 export default function Profile() {
   const [likedCars, setLikedCars] = useState<any[]>([]);
@@ -67,12 +68,19 @@ export default function Profile() {
             <Card.Content style={styles.cardContent}>
               <View style={styles.priceContainer}>
                 <Text style={styles.priceText}>₹ {car.exceptedPrice}</Text>
-                <Ionicons
-                  name="heart"
-                  size={28}
-                  color={colorThemes.primary}
-                  style={styles.heartIcon}
-                />
+                <LinearGradient
+                  colors={[colorThemes.primary, colorThemes.accent2]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.heartGradient}
+                >
+                  <Ionicons
+                    name="heart"
+                    size={28}
+                    color={colorThemes.textLight}
+                    style={styles.heartIcon}
+                  />
+                </LinearGradient>
               </View>
               <Text style={styles.carTitle}>
                 {car.modelYear} {car.carBrand} {car.carModel}
@@ -109,8 +117,10 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.backgroundLight,
   },
   emptyText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
-    fontSize: 16,
     textAlign: "center",
   },
   headerContainer: {
@@ -125,10 +135,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   headerText: {
-    textAlign: "center",
-    fontWeight: "700",
-    fontSize: 18,
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.primary,
+    textAlign: "center",
   },
   scrollContainer: {
     flex: 1,
@@ -156,19 +167,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   priceText: {
-    paddingVertical: 3,
-    fontWeight: "700",
-    fontSize: 18,
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.primary,
   },
+  heartGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   heartIcon: {
-    paddingRight: 10,
+    marginRight: 0,
+    color: colorThemes.textLight,
   },
   carTitle: {
-    fontSize: 14,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
     marginBottom: 6,
-    fontWeight: "500",
   },
   carDetailsContainer: {
     flexDirection: "row",
@@ -177,15 +197,17 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   carDetailBox: {
-    padding: 6,
+    padding: 8,
+    paddingVertical: 6,
     backgroundColor: colorThemes.accent2,
     borderRadius: 6,
     justifyContent: "center",
   },
   carDetailText: {
-    fontSize: 12,
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
     color: colorThemes.textLight,
     paddingHorizontal: 5,
-    fontWeight: "500",
   },
 });

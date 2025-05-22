@@ -18,6 +18,7 @@ import { TextInput } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import colorThemes from "../theme";
 import { Ionicons } from "@expo/vector-icons";
+import { typography } from "@/app/theme";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -210,21 +211,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   appName: {
-    fontSize: 24,
-    fontWeight: "800",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
     color: colorThemes.primary,
     marginBottom: 24,
-    letterSpacing: 1,
+    letterSpacing: typography.letterSpacing.wide,
   },
   title: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h1,
+    lineHeight: typography.lineHeights.h1,
     color: colorThemes.textPrimary,
-    fontWeight: "700",
-    fontSize: 32,
     marginBottom: 12,
+    letterSpacing: typography.letterSpacing.tight,
   },
   subtitle: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
-    fontSize: 16,
     textAlign: "center",
     maxWidth: "80%",
   },
@@ -237,8 +243,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.error,
-    fontSize: 14,
     marginBottom: 16,
     marginLeft: 4,
   },
@@ -259,10 +267,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textLight,
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
   loadingContainer: {
     flexDirection: "row",
@@ -288,9 +297,11 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.greyLight,
   },
   dividerText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
     paddingHorizontal: 16,
-    fontSize: 14,
     fontWeight: "500",
   },
   phoneLoginButton: {
@@ -307,21 +318,26 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   phoneLoginText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.primary,
-    fontSize: 16,
-    fontWeight: "600",
   },
   footerContainer: {
     alignItems: "center",
     marginBottom: 24,
   },
   footerText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
-    fontSize: 14,
   },
   footerLink: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.primary,
-    fontWeight: "600",
   },
 });
 

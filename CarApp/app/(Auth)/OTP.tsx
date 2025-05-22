@@ -22,6 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { typography } from "@/app/theme";
 
 const OTP = () => {
   const [number, setNumber] = useState("");
@@ -491,21 +492,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   appName: {
-    fontSize: 24,
-    fontWeight: "800",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
     color: colorThemes.primary,
     marginBottom: 24,
-    letterSpacing: 1,
+    letterSpacing: typography.letterSpacing.wide,
   },
   title: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h1,
+    lineHeight: typography.lineHeights.h1,
     color: colorThemes.textPrimary,
-    fontWeight: "700",
-    fontSize: 32,
     marginBottom: 12,
+    letterSpacing: typography.letterSpacing.tight,
   },
   subtitle: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
-    fontSize: 16,
     textAlign: "center",
     maxWidth: "80%",
   },
@@ -545,10 +551,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textLight,
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
   footerContainer: {
     alignItems: "center",
@@ -582,19 +589,23 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
     color: colorThemes.textPrimary,
     marginBottom: 8,
   },
   modalSubtitle: {
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
     textAlign: "center",
   },
   phoneNumberText: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.primary,
     marginTop: 8,
   },
@@ -632,9 +643,10 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.backgroundLight,
   },
   secondaryButtonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
-    fontSize: 16,
-    fontWeight: "600",
   },
   otpInputContainer: {
     marginVertical: 16,
@@ -655,13 +667,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resendText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
-    fontSize: 14,
   },
   countdownText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
-    fontSize: 14,
-    fontWeight: "500",
   },
   resendButtonContainer: {
     marginLeft: 4,
@@ -672,8 +687,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   autoVerifyText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
-    fontSize: 14,
     textAlign: "center",
     marginBottom: 12,
     fontStyle: "italic",

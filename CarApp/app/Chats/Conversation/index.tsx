@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { typography } from "@/app/theme";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -401,14 +402,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   carTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textLight,
     marginBottom: 2,
   },
   carPrice: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle2,
+    lineHeight: typography.lineHeights.subtitle2,
     color: "rgba(255, 255, 255, 0.9)",
   },
   chatContainer: {
@@ -422,9 +425,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
+    marginTop: 12,
   },
   scrollView: {
     flex: 1,
@@ -440,23 +445,28 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyText: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: "600",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.textPrimary,
+    textAlign: "center",
   },
   emptySubText: {
-    marginTop: 8,
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
     textAlign: "center",
+    marginTop: 8,
   },
   dateSeparator: {
     alignItems: "center",
     marginVertical: 16,
   },
   dateSeparatorText: {
-    fontSize: 12,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
     color: colorThemes.textSecondary,
     backgroundColor: "rgba(0, 0, 0, 0.05)",
     paddingHorizontal: 12,
@@ -468,7 +478,9 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   timeSeparatorText: {
-    fontSize: 11,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.small,
+    lineHeight: typography.lineHeights.small,
     color: colorThemes.textSecondary,
     backgroundColor: "rgba(0, 0, 0, 0.03)",
     paddingHorizontal: 10,
@@ -507,9 +519,10 @@ const styles = StyleSheet.create({
     shadowRadius: 1,
   },
   messageText: {
-    fontSize: 16,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
-    lineHeight: 22,
   },
   messageTime: {
     fontSize: 11,

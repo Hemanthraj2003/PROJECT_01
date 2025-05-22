@@ -15,6 +15,7 @@ import SingleChatCard from "../(Home)/components/SingleChatCard";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { typography } from "@/app/theme";
 
 type ChatMessage = {
   sentBy: "admin" | "user";
@@ -250,10 +251,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerText: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h2,
+    lineHeight: typography.lineHeights.h2,
     color: colorThemes.textLight,
-    fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.tight,
   },
   badgeContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.25)",
@@ -294,14 +296,15 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyText: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: "600",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.textPrimary,
   },
   emptySubText: {
-    marginTop: 8,
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
     textAlign: "center",
   },
@@ -353,9 +356,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadMoreText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textLight,
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
 });

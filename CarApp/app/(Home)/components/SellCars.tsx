@@ -20,7 +20,7 @@ import {
   uploadImages,
 } from "../Services/backendoperations";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import colorThemes from "@/app/theme";
+import colorThemes, { typography } from "@/app/theme";
 import { Picker } from "@react-native-picker/picker";
 
 // Car brands list
@@ -573,14 +573,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     marginTop: 15,
     paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colorThemes.greyLight,
+    paddingBottom: 15,
   },
   headerText: {
-    fontSize: 32,
-    fontWeight: "600",
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h1,
+    lineHeight: typography.lineHeights.h1,
     color: colorThemes.primary,
     marginBottom: 5,
   },
-  // Section styling
   sectionContainer: {
     marginHorizontal: 15,
     marginVertical: 10,
@@ -600,25 +603,26 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.h3,
+    lineHeight: typography.lineHeights.h3,
     color: colorThemes.primary,
     marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
   },
-  // Form grid layout
   formGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
     flexWrap: "wrap",
   },
   formColumn: {
-    width: "48%", // Slightly less than 50% to account for spacing
+    width: "48%",
   },
-  // Image picker styling
   imagePickerContainer: {
     alignItems: "center",
     marginBottom: 10,
@@ -626,16 +630,6 @@ const styles = StyleSheet.create({
   uploadButtonContainer: {
     width: "100%",
     alignItems: "center",
-  },
-  uploadMoreButtonContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  carouselContainer: {
-    alignItems: "center",
-    marginBottom: 15,
-    width: "100%",
   },
   uploadContainer: {
     height: 180,
@@ -647,18 +641,14 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colorThemes.greyLight,
     borderStyle: "dashed",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderColor: colorThemes.accent2,
   },
   uploadText: {
-    color: colorThemes.textSecondary,
-    fontSize: 20,
-    fontWeight: "500",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
+    color: colorThemes.accent2,
   },
   uploadButton: {
     flexDirection: "row",
@@ -670,83 +660,102 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: colorThemes.backgroundLight,
     borderWidth: 1,
-    borderColor: colorThemes.greyLight,
+    borderColor: colorThemes.accent2,
+  },
+  uploadMoreButtonContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  uploadMoreText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body2,
+    lineHeight: typography.lineHeights.body2,
+    color: colorThemes.primary,
   },
   disabledUploadButton: {
     borderColor: colorThemes.greyLight,
     backgroundColor: colorThemes.backgroundDark,
   },
-  uploadMoreText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  // Input styling
   textInput: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
+    color: colorThemes.textPrimary,
+    backgroundColor: colorThemes.background,
     marginVertical: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    borderBottomWidth: 1,
-    letterSpacing: 0.5,
-    color: colorThemes.textPrimary,
+    paddingVertical: 12,
+    borderWidth: 1,
     borderColor: colorThemes.greyLight,
-  },
-  inputError: {
-    borderColor: colorThemes.error,
-  },
-  errorText: {
-    color: colorThemes.error,
-    fontSize: 12,
-    marginLeft: 12,
-    marginTop: -4,
-    marginBottom: 8,
+    borderRadius: 8,
+    letterSpacing: typography.letterSpacing.normal,
   },
   textAreaInput: {
-    height: 100,
+    minHeight: 100,
     textAlignVertical: "top",
     paddingTop: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginTop: 15,
   },
   inputPicker: {
     marginVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colorThemes.greyLight,
+    borderWidth: 1,
+    borderColor: colorThemes.greyLight,
+    borderRadius: 8,
+    backgroundColor: colorThemes.background,
   },
   pickerLabel: {
-    color: colorThemes.grey,
-    fontSize: 14,
-    fontWeight: "500",
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
+    color: colorThemes.textSecondary,
     marginBottom: 4,
-    marginStart: 10,
+    marginStart: 12,
+    marginTop: 8,
   },
-  // Submit button
   submitButtonContainer: {
     margin: 15,
     borderRadius: 10,
     overflow: "hidden",
-    // elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   submitButton: {
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
   },
+  submitButtonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    lineHeight: typography.lineHeights.subtitle1,
+    color: colorThemes.textLight,
+    letterSpacing: typography.letterSpacing.wide,
+  },
   disabledButton: {
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: "center",
     backgroundColor: colorThemes.grey,
     opacity: 0.7,
   },
-  submitButtonText: {
-    color: colorThemes.textLight,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-    fontSize: 17,
+  errorText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.caption,
+    lineHeight: typography.lineHeights.caption,
+    color: colorThemes.error,
+    marginLeft: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  inputError: {
+    borderColor: colorThemes.error,
+  },
+  carouselContainer: {
+    alignItems: "center",
+    marginBottom: 15,
+    width: "100%",
   },
 });

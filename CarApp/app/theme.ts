@@ -45,8 +45,54 @@ const colorThemes = {
   primary2: "#C96C1A", // Replaced with amber/brown from logo
 };
 
+// Typography system
+export const typography = {
+  // Font Families
+  fonts: {
+    heading: "TitilliumWeb_700Bold",
+    bodyBold: "TitilliumWeb_600SemiBold",
+    body: "TitilliumWeb_400Regular",
+    light: "TitilliumWeb_300Light",
+    extraLight: "TitilliumWeb_200ExtraLight",
+  },
+
+  // Font Sizes
+  sizes: {
+    h1: 32,
+    h2: 24,
+    h3: 20,
+    subtitle1: 18,
+    subtitle2: 16,
+    body1: 16,
+    body2: 14,
+    caption: 12,
+    small: 11,
+  },
+
+  // Line Heights
+  lineHeights: {
+    h1: 40,
+    h2: 32,
+    h3: 28,
+    subtitle1: 24,
+    subtitle2: 22,
+    body1: 24,
+    body2: 20,
+    caption: 16,
+    small: 14,
+  },
+
+  // Letter Spacing
+  letterSpacing: {
+    tight: -0.5,
+    normal: 0,
+    wide: 0.5,
+    wider: 1,
+  },
+};
+
 // const PRODAPI = "http://103.194.228.71:5000";
-const PRODAPI = "http://192.168.0.102:5000";
+const PRODAPI = "http://192.168.0.100:5000";
 const DEVAPI = "http://192.168.0.106:5000";
 export default colorThemes;
 
