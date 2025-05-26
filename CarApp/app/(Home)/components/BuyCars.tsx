@@ -28,7 +28,9 @@ export default function BuyCars() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInputText, setSearchInputText] = useState("");
-  const [activeFilters, setActiveFilters] = useState<any[]>([]);
+  const [activeFilters, setActiveFilters] = useState<any[]>([
+    { field: "carStatus", condition: "==", value: "approved" },
+  ]);
   const router = useRouter();
   const { showLoading, hideLoading } = useLoading();
 
@@ -155,7 +157,10 @@ export default function BuyCars() {
     setRefreshing(true);
     setSearchTerm("");
     setSearchInputText("");
-    setActiveFilters([]);
+    // Reset activeFilters to default values
+    setActiveFilters([
+      { field: "carStatus", condition: "==", value: "approved" },
+    ]);
     clearFilterParams();
     try {
       await getData(true);
@@ -593,7 +598,13 @@ export default function BuyCars() {
                   style={filterModal.resetButton}
                   onPress={() => {
                     clearFilterParams();
-                    setActiveFilters([]);
+                    setActiveFilters([
+                      {
+                        field: "carStatus",
+                        condition: "==",
+                        value: "approved",
+                      },
+                    ]);
                     setShowFilter(false);
                     getData(true);
                   }}
