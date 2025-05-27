@@ -1,0 +1,50 @@
+{
+  "name": "friends-cars",
+  "version": "1.0.0",
+  "description": "Car resale platform with React Native app, Next.js admin panel, and Node.js backend",
+  "private": true,
+  "scripts": {
+    "setup": "npm run setup:server && npm run setup:carapp && npm run setup:admin",
+    "setup:server": "cd SERVER && npm install",
+    "setup:carapp": "cd CarApp && npm install --legacy-peer-deps",
+    "setup:admin": "cd admin_pannel && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:admin\" \"npm run dev:carapp\"",
+    "dev:server": "cd SERVER && npm start",
+    "dev:admin": "cd admin_pannel && npm run dev",
+    "dev:carapp": "cd CarApp && npm start",
+    "start": "npm run dev",
+    "check": "node check-setup.js",
+    "clean": "npm run clean:server && npm run clean:carapp && npm run clean:admin",
+    "clean:server": "cd SERVER && rm -rf node_modules package-lock.json",
+    "clean:carapp": "cd CarApp && rm -rf node_modules package-lock.json",
+    "clean:admin": "cd admin_pannel && rm -rf node_modules package-lock.json",
+    "reinstall": "npm run clean && npm run setup",
+    "test": "npm run test:carapp",
+    "test:carapp": "cd CarApp && npm test",
+    "build": "npm run build:admin",
+    "build:admin": "cd admin_pannel && npm run build",
+    "build:carapp": "cd CarApp && expo build:android"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "nextjs",
+    "nodejs",
+    "car-resale",
+    "mobile-app"
+  ],
+  "author": "RoughCipher",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "workspaces": [
+    "CarApp",
+    "admin_pannel",
+    "SERVER"
+  ]
+}
