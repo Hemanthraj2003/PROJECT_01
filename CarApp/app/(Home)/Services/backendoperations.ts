@@ -1,14 +1,54 @@
 import { DEVAPI, PRODAPI } from "@/app/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 
 // Production API URL
 const API_URL = PRODAPI;
-// const API_URL = DEVAPI;
+
+// Common error handling utility
+const handleApiResponse = async (response: Response) => {
+  if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error("SERVER_ERROR"); // Special error type for server errors
+    }
+    const error = await response.json().catch(() => ({
+      message: "Unknown error occurred",
+    }));
+    throw new Error(error.message || "Request failed");
+  }
+  return response.json();
+};
+
+// Network check utility
+const checkNetwork = async () => {
+  const netInfo = await NetInfo.fetch();
+  if (!netInfo.isConnected) {
+    throw new Error("OFFLINE");
+  }
+};
+
+// Error handling wrapper for API calls
+const withErrorHandling = async <T>(apiCall: () => Promise<T>): Promise<T> => {
+  try {
+    await checkNetwork();
+    return await apiCall();
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === "OFFLINE") {
+        throw new Error(
+          "You are offline. Please check your internet connection."
+        );
+      } else if (error.message === "SERVER_ERROR") {
+        throw new Error("Server error occurred. Please try again later.");
+      }
+      throw error;
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
 
 export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
-  console.log("fetching cars page", page);
-
-  try {
+  return withErrorHandling(async () => {
     const response = await fetch(
       `${API_URL}/cars?page=${page}&limit=${limit}`,
       {
@@ -19,34 +59,15 @@ export const fetchAllCars = async (page: number = 1, limit: number = 10) => {
       }
     );
 
-    const data = await response.json();
+    const data = await handleApiResponse(response);
     if (data.success) {
       return {
         cars: data.data,
         pagination: data.pagination,
       };
     }
-    return {
-      cars: [],
-      pagination: {
-        total: 0,
-        currentPage: 1,
-        totalPages: 0,
-        hasMore: false,
-      },
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      cars: [],
-      pagination: {
-        total: 0,
-        currentPage: 1,
-        totalPages: 0,
-        hasMore: false,
-      },
-    };
-  }
+    throw new Error(data.message || "Failed to fetch cars");
+  });
 };
 
 export const fetchAllFilteredCars = async (
@@ -55,7 +76,7 @@ export const fetchAllFilteredCars = async (
   page: number = 1,
   limit: number = 10
 ) => {
-  try {
+  return withErrorHandling(async () => {
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -73,60 +94,41 @@ export const fetchAllFilteredCars = async (
       body: JSON.stringify({ filters: filterParams }),
     });
 
-    const data = await response.json();
+    const data = await handleApiResponse(response);
     if (data.success) {
-      if (data.pagination) {
-        console.log("Pagination data:", data.pagination);
-      }
       return {
         cars: data.data,
         pagination: data.pagination,
       };
     }
-    return {
-      cars: [],
-      pagination: {
-        total: 0,
-        currentPage: 1,
-        totalPages: 0,
-        hasMore: false,
-      },
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      cars: [],
-      pagination: {
-        total: 0,
-        currentPage: 1,
-        totalPages: 0,
-        hasMore: false,
-      },
-    };
-  }
+    throw new Error(data.message || "Failed to fetch filtered cars");
+  });
 };
 
-export const fetchCarsById = async (ids: any) => {
-  const response = await fetch(`${API_URL}/cars/getMyCars`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ carsIds: ids }),
+export const fetchCarsById = async (ids: string[]) => {
+  return withErrorHandling(async () => {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    const response = await fetch(`${API_URL}/cars/getMyCars`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ carsIds: ids }),
+    });
+
+    const data = await handleApiResponse(response);
+    if (data.success) {
+      return data.data;
+    }
+    throw new Error(data.message || "Failed to fetch cars by ID");
   });
-  const data = await response.json();
-  // console.log(data);
-
-  if (response.status) {
-    // console.log(data.data);
-
-    return data.data;
-  }
-  return false;
 };
 
 export const postCarForApproval = async (carData: any) => {
-  try {
+  return withErrorHandling(async () => {
     const response = await fetch(`${API_URL}/cars/post`, {
       method: "POST",
       headers: {
@@ -135,28 +137,18 @@ export const postCarForApproval = async (carData: any) => {
       body: JSON.stringify(carData),
     });
 
-    // Check the response status
-    const data = await response.json();
-
-    if (response.status === 201) {
-      // Successfully added car
-      console.log("Car added successfully:", data);
+    const data = await handleApiResponse(response);
+    if (data.success) {
       return { success: true, carId: data.data.carId };
-    } else {
-      // Handle any errors
-      console.error("Failed to add car:", data.message);
-      return { success: false, message: data.message };
     }
-  } catch (error) {
-    console.error("Error posting car data:", error);
-    return { success: false, message: "Error posting car data" };
-  }
+    throw new Error(data.message || "Failed to post car for approval");
+  });
 };
 
 // USER RELATEDED METHODS
 
 export const fetchUserById = async (userId: string) => {
-  try {
+  return withErrorHandling(async () => {
     const response = await fetch(`${API_URL}/users/${userId}`, {
       method: "GET",
       headers: {
@@ -164,29 +156,25 @@ export const fetchUserById = async (userId: string) => {
       },
     });
 
-    const data = await response.json();
-
+    const data = await handleApiResponse(response);
     if (data.success) {
-      // Update the user data in AsyncStorage
       await AsyncStorage.setItem("userDetails", JSON.stringify(data.data));
       return data.data;
     }
-    return null;
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    return null;
-  }
+    throw new Error(data.message || "Failed to fetch user data");
+  });
 };
-export const registerNewUser = async (userInfo: any) => {
-  const dataToPost = {
-    ...userInfo,
-    boughtCars: [],
-    soldCars: [],
-    onSaleCars: [],
-    likedCars: [],
-  };
 
-  try {
+export const registerNewUser = async (userInfo: any) => {
+  return withErrorHandling(async () => {
+    const dataToPost = {
+      ...userInfo,
+      boughtCars: [],
+      soldCars: [],
+      onSaleCars: [],
+      likedCars: [],
+    };
+
     const response = await fetch(`${API_URL}/users/signup`, {
       method: "POST",
       headers: {
@@ -194,24 +182,18 @@ export const registerNewUser = async (userInfo: any) => {
       },
       body: JSON.stringify(dataToPost),
     });
-    console.log(response);
 
-    const data = await response.json();
-
+    const data = await handleApiResponse(response);
     if (data.success) {
-      console.log(data);
-      AsyncStorage.setItem("userDetails", JSON.stringify(data.data)); // Store user data
-      return true;
+      await AsyncStorage.setItem("userDetails", JSON.stringify(data.data));
+      return data.data;
     }
-    return false;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+    throw new Error(data.message || "Failed to register user");
+  });
 };
 
 export const updateUserData = async (userInfo: any) => {
-  try {
+  return withErrorHandling(async () => {
     const response = await fetch(`${API_URL}/users/update`, {
       method: "PUT",
       headers: {
@@ -220,24 +202,19 @@ export const updateUserData = async (userInfo: any) => {
       body: JSON.stringify(userInfo),
     });
 
-    const data = await response.json();
+    const data = await handleApiResponse(response);
     if (data.success) {
-      AsyncStorage.setItem("userDetails", JSON.stringify(data.data)); // Store user data
+      await AsyncStorage.setItem("userDetails", JSON.stringify(data.data));
       return data.data;
     }
-    return false;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+    throw new Error(data.message || "Failed to update user data");
+  });
 };
 
 export const checkForRegisteredUser = async (
   mailId: string
 ): Promise<boolean> => {
-  try {
-    console.log("Number: ", mailId);
-
+  return withErrorHandling(async () => {
     const response = await fetch(
       `${API_URL}/users/isExists?phone=${encodeURIComponent(mailId)}`,
       {
@@ -248,26 +225,22 @@ export const checkForRegisteredUser = async (
       }
     );
 
-    const data = await response.json();
-
-    if (data.success && data.isExists) {
-      AsyncStorage.setItem("userDetails", JSON.stringify(data.data)); // Store user data
-      return true;
+    const data = await handleApiResponse(response);
+    if (data.success) {
+      if (data.isExists) {
+        await AsyncStorage.setItem("userDetails", JSON.stringify(data.data));
+      }
+      return data.isExists;
     }
-
-    return false;
-  } catch (error) {
-    console.error("Error checking for registered user:", error);
-    return false;
-  }
+    throw new Error(data.message || "Failed to check user registration");
+  });
 };
 
 // Image Upload Methods
 export const uploadImages = async (imageUris: string[]) => {
-  try {
+  return withErrorHandling(async () => {
     const formData = new FormData();
 
-    // Append each image to formData
     for (const uri of imageUris) {
       const filename = uri.split("/").pop() || "image.jpg";
       const match = /\.(\w+)$/.exec(filename);
@@ -288,23 +261,13 @@ export const uploadImages = async (imageUris: string[]) => {
       },
     });
 
-    const data = await response.json();
-    console.log(data);
-
-    if (response.ok) {
+    const data = await handleApiResponse(response);
+    if (data.success) {
       return {
         success: true,
         imageUrls: data.imageUrls,
       };
-    } else {
-      throw new Error(data.message || "Failed to upload images");
     }
-  } catch (error) {
-    console.error("Error uploading images:", error);
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to upload images",
-    };
-  }
+    throw new Error(data.message || "Failed to upload images");
+  });
 };

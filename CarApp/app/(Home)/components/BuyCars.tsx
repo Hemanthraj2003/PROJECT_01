@@ -16,7 +16,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { fetchAllFilteredCars } from "../Services/backendoperations";
 import colorThemes from "@/app/theme";
 import { useLoading } from "@/app/context/loadingContext";
+import { useNotification } from "@/app/context/notificationContext";
 import { typography } from "@/app/theme";
+import NetInfo from "@react-native-community/netinfo";
 
 export default function BuyCars() {
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -33,6 +35,8 @@ export default function BuyCars() {
   ]);
   const router = useRouter();
   const { showLoading, hideLoading } = useLoading();
+  const { showNotification } = useNotification();
+  const [isOffline, setIsOffline] = useState(false);
 
   // dumbway of creating the filter paramters
 
@@ -57,6 +61,25 @@ export default function BuyCars() {
   // Transmission parameters
   const [tr1, settr1] = useState<boolean>(false);
   const [tr2, settr2] = useState<boolean>(false);
+
+  // Add network status listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const wasOffline = isOffline;
+      setIsOffline(!state.isConnected);
+
+      if (!state.isConnected && !wasOffline) {
+        showNotification(
+          "You are offline. Please check your internet connection.",
+          "warning"
+        );
+      } else if (state.isConnected && wasOffline) {
+        showNotification("You are back online!", "success");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOffline]);
 
   useEffect(() => {
     getData();
@@ -98,6 +121,14 @@ export default function BuyCars() {
         showLoading();
       }
 
+      if (isOffline) {
+        showNotification(
+          "You're offline. Please check your internet connection.",
+          "error"
+        );
+        return;
+      }
+
       const pageToFetch = reset ? 1 : currentPage;
 
       const { cars: newCars, pagination } = await fetchAllFilteredCars(
@@ -114,8 +145,23 @@ export default function BuyCars() {
 
       setHasMore(pagination.hasMore);
       setCurrentPage(pageToFetch + 1);
+
+      // Show feedback when no cars are found
+      if (newCars.length === 0 && reset) {
+        showNotification(
+          searchTerm
+            ? `No cars found matching "${searchTerm}"`
+            : "No cars found with the current filters",
+          "info"
+        );
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching cars:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error fetching cars. Please try again later.";
+      showNotification(errorMessage, "error");
     } finally {
       setLoading(false);
       // Only hide full-screen loading on initial load or reset
@@ -134,19 +180,39 @@ export default function BuyCars() {
     setCurrentPage(1);
     setHasMore(true);
 
+    if (isOffline) {
+      showNotification(
+        "You're offline. Please check your internet connection.",
+        "error"
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       showLoading(); // Show full-screen loading for search as it's a new query
+
       const { cars: searchResults, pagination } = await fetchAllFilteredCars(
         activeFilters,
         text,
         1
       );
+
       setCars(searchResults);
       setHasMore(pagination.hasMore);
       setCurrentPage(2);
+
+      // Show feedback for search results
+      if (text && searchResults.length === 0) {
+        showNotification(`No cars found matching "${text}"`, "info");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Search error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error performing search. Please try again.";
+      showNotification(errorMessage, "error");
     } finally {
       setLoading(false);
       hideLoading();
@@ -187,6 +253,14 @@ export default function BuyCars() {
   };
 
   const onFilterSubmit = async () => {
+    if (isOffline) {
+      showNotification(
+        "You're offline. Please check your internet connection.",
+        "error"
+      );
+      return;
+    }
+
     const filterParams = [];
 
     // Price Range filters
@@ -197,12 +271,18 @@ export default function BuyCars() {
     if (pr3) priceConditions.push([600000, Number.MAX_SAFE_INTEGER]);
 
     if (priceConditions.length > 0) {
-      const min = Math.min(...priceConditions.map((p) => p[0]));
-      const max = Math.max(...priceConditions.map((p) => p[1]));
-      filterParams.push(
-        { field: "exceptedPrice", condition: ">=", value: min },
-        { field: "exceptedPrice", condition: "<=", value: max }
-      );
+      try {
+        const min = Math.min(...priceConditions.map((p) => p[0]));
+        const max = Math.max(...priceConditions.map((p) => p[1]));
+        filterParams.push(
+          { field: "exceptedPrice", condition: ">=", value: min },
+          { field: "exceptedPrice", condition: "<=", value: max }
+        );
+      } catch (error) {
+        console.error("Error processing price filters:", error);
+        showNotification("Error applying price filters", "error");
+        return;
+      }
     }
 
     // Fuel Type filters
@@ -219,32 +299,37 @@ export default function BuyCars() {
         condition: fuelTypes.length === 1 ? "==" : "in",
         value: fuelTypes.length === 1 ? fuelTypes[0] : fuelTypes,
       });
-    }
-
-    // KM Driven filters
+    } // KM Driven filters
     const kmRanges = [];
-    if (mr1) kmRanges.push([0, 50000]);
-    if (mr2) kmRanges.push([50000, 100000]);
-    if (mr3) kmRanges.push([100000, Number.MAX_SAFE_INTEGER]);
+    // Validate km ranges to ensure they are reasonable
+    try {
+      if (mr1) kmRanges.push([0, 50000]);
+      if (mr2) kmRanges.push([50000, 100000]);
+      if (mr3) kmRanges.push([100000, 1000000]); // Set a reasonable upper limit
 
-    if (kmRanges.length > 0) {
-      // If only one range is selected, use that range directly
-      if (kmRanges.length === 1) {
-        const [min, max] = kmRanges[0];
-        filterParams.push(
-          { field: "km", condition: ">=", value: min },
-          { field: "km", condition: "<=", value: max }
-        );
+      if (kmRanges.length > 0) {
+        // If only one range is selected, use that range directly
+        if (kmRanges.length === 1) {
+          const [min, max] = kmRanges[0];
+          filterParams.push(
+            { field: "km", condition: ">=", value: min },
+            { field: "km", condition: "<=", value: max }
+          );
+        }
+        // If multiple ranges are selected, we need to find the min and max values
+        else {
+          const min = Math.min(...kmRanges.map((range) => range[0]));
+          const max = Math.max(...kmRanges.map((range) => range[1]));
+          filterParams.push(
+            { field: "km", condition: ">=", value: min },
+            { field: "km", condition: "<=", value: max }
+          );
+        }
       }
-      // If multiple ranges are selected, we need to find the min and max values
-      else {
-        const min = Math.min(...kmRanges.map((range) => range[0]));
-        const max = Math.max(...kmRanges.map((range) => range[1]));
-        filterParams.push(
-          { field: "km", condition: ">=", value: min },
-          { field: "km", condition: "<=", value: max }
-        );
-      }
+    } catch (error) {
+      console.error("Error processing kilometer filters:", error);
+      showNotification("Error applying kilometer filters", "error");
+      return;
     }
 
     // Transmission Type filters
@@ -276,8 +361,12 @@ export default function BuyCars() {
       setCurrentPage(2);
       setHasMore(pagination.hasMore);
     } catch (error) {
-      console.error(error);
-      alert("Error applying filters");
+      console.error("Error applying filters:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error applying filters. Please try again.";
+      showNotification(errorMessage, "error");
     } finally {
       setLoading(false);
       hideLoading();

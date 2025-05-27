@@ -7,36 +7,87 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById, fetchUserById } from "../Services/backendoperations";
 import { useLoading } from "@/app/context/loadingContext";
+import { useNotification } from "@/app/context/notificationContext";
 import colorThemes, { typography } from "@/app/theme";
+import NetInfo from "@react-native-community/netinfo";
 
 export default function MyCars() {
   const [value, setValue] = useState("onSale");
   const [onSale, setOnSale] = useState<any>([]);
   const [bought, setBought] = useState<any>([]);
   const [sold, setSold] = useState<any>([]);
+  const [isOffline, setIsOffline] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user, forceSetUser } = useAuth();
   const { showLoading, hideLoading } = useLoading();
+  const { showNotification } = useNotification();
   const [refreshing, setRefreshing] = useState(false);
 
+  // Add network status listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const wasOffline = isOffline;
+      setIsOffline(!state.isConnected);
+
+      if (!state.isConnected && !wasOffline) {
+        showNotification(
+          "You are offline. Some features may be limited.",
+          "warning"
+        );
+      } else if (state.isConnected && wasOffline) {
+        showNotification("You are back online!", "success");
+        // Refresh data when coming back online
+        refreshUserData().then(() => fetchCarDetails());
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOffline]);
+
   const fetchCarDetails = async () => {
+    if (isOffline) {
+      showNotification("Cannot update cars while offline", "error");
+      return;
+    }
+
+    setError(null);
     try {
       showLoading();
       const onSaleCars = await fetchCarsById(user?.onSaleCars);
-      if (onSaleCars) setOnSale(onSaleCars);
+      if (onSaleCars) {
+        setOnSale(onSaleCars);
+      } else {
+        setOnSale([]);
+        showNotification("Could not fetch cars on sale", "error");
+      }
 
       const boughtCars = await fetchCarsById(user?.boughtCars);
-      if (boughtCars) setBought(boughtCars);
+      if (boughtCars) {
+        setBought(boughtCars);
+      } else {
+        setBought([]);
+        showNotification("Could not fetch bought cars", "error");
+      }
 
       const soldCars = await fetchCarsById(user?.soldCars);
-      if (soldCars) setSold(soldCars);
+      if (soldCars) {
+        setSold(soldCars);
+      } else {
+        setSold([]);
+        showNotification("Could not fetch sold cars", "error");
+      }
     } catch (error) {
-      console.error("Error fetching car details:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch car details"
+      );
+      showNotification("Error loading your cars. Please try again.", "error");
     } finally {
       hideLoading();
     }
@@ -44,7 +95,12 @@ export default function MyCars() {
 
   const refreshUserData = async () => {
     if (!user || !user.id) {
-      console.error("Cannot refresh user data: No user ID available");
+      showNotification("No user found. Please log in again.", "error");
+      return false;
+    }
+
+    if (isOffline) {
+      showNotification("Cannot refresh user data while offline", "error");
       return false;
     }
 
@@ -55,14 +111,15 @@ export default function MyCars() {
       if (updatedUserData) {
         // Force update the user context with the latest data
         await forceSetUser();
-        console.log("User data refreshed successfully");
         return true;
       } else {
-        console.error("Failed to fetch updated user data");
+        showNotification("Could not refresh user data", "error");
         return false;
       }
     } catch (error) {
-      console.error("Error refreshing user data:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      showNotification(errorMessage, "error");
       return false;
     }
   };
@@ -182,6 +239,46 @@ export default function MyCars() {
 
   // UI sections for different categories
   const renderContent = () => {
+    if (error) {
+      return (
+        <ScrollView
+          contentContainerStyle={styles.emptyStateContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colorThemes.primary, colorThemes.accent2]}
+              tintColor={colorThemes.primary}
+            />
+          }
+        >
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.emptyStateSubtext}>Pull down to try again</Text>
+        </ScrollView>
+      );
+    }
+
+    if (isOffline) {
+      return (
+        <ScrollView
+          contentContainerStyle={styles.emptyStateContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colorThemes.primary, colorThemes.accent2]}
+              tintColor={colorThemes.primary}
+            />
+          }
+        >
+          <Text style={styles.warningText}>You are currently offline</Text>
+          <Text style={styles.emptyStateSubtext}>
+            Pull down to refresh when back online
+          </Text>
+        </ScrollView>
+      );
+    }
+
     switch (value) {
       case "onSale":
         return onSale.length > 0 ? (
@@ -421,6 +518,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body2,
     lineHeight: typography.lineHeights.body2,
     color: colorThemes.grey,
+    textAlign: "center",
+  },
+  errorText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    color: colorThemes.error,
+    textAlign: "center",
+  },
+  warningText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.subtitle1,
+    color: colorThemes.warning,
     textAlign: "center",
   },
   listContentContainer: {

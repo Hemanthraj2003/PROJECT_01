@@ -31,17 +31,22 @@ type chatProps = {
 const SingleChatCard = ({ chat }: chatProps) => {
   const [carData, setCarData] = useState<any>({});
   const router = useRouter();
-
   useEffect(() => {
-    console.log("Hello");
-
-    (async () => {
-      const response = await fetchCarsById([chat.carId]);
-      if (response) {
-        setCarData(response[0]);
+    const fetchCarData = async () => {
+      try {
+        const response = await fetchCarsById([chat.carId]);
+        if (response?.[0]) {
+          setCarData(response[0]);
+        } else {
+          console.error("Car data not found for chat:", chat.id);
+        }
+      } catch (error) {
+        console.error("Error fetching car data:", error);
       }
-    })();
-  }, []);
+    };
+
+    fetchCarData();
+  }, [chat.carId]);
 
   const openChat = () => {
     router.push({

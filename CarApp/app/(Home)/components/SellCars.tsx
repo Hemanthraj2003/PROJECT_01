@@ -22,6 +22,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import colorThemes, { typography } from "@/app/theme";
 import { Picker } from "@react-native-picker/picker";
+import NetInfo from "@react-native-community/netinfo";
 
 // Car brands list
 const carBrands = [
@@ -98,26 +99,42 @@ export default function SellCars() {
   // Handle image picking
   const pickImage = async () => {
     if (images.length >= 7) {
-      alert("Cannot upload more than 7 images");
+      Alert.alert("Too Many Images", "You can only upload up to 7 images.");
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      // Keep using MediaTypeOptions but note it's deprecated
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant camera roll access to upload images.",
+          [{ text: "OK", onPress: () => {} }]
+        );
+        return;
+      }
 
-    if (result && !result.canceled && result.assets?.length > 0) {
-      const imageUri = result.assets[0].uri;
-      // Keep using SaveFormat but note it's deprecated
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      setImages((prev) => [...prev, compressedImage.uri]);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (result && !result.canceled && result.assets?.length > 0) {
+        const imageUri = result.assets[0].uri;
+        // Compress and resize the image
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          imageUri,
+          [{ resize: { width: 800 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        setImages((prev) => [...prev, compressedImage.uri]);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image. Please try again.");
     }
   };
 
@@ -164,12 +181,36 @@ export default function SellCars() {
   const handleSubmit = async (): Promise<void> => {
     // Check if all required fields are filled
     if (!isFormValid()) {
-      alert("Please fill in all required fields.");
+      Alert.alert(
+        "Required Fields Missing",
+        "Please fill in all required fields before submitting.",
+        [{ text: "OK", onPress: () => {} }]
+      );
+      return;
+    }
+
+    if (phoneNumber.length !== 10) {
+      Alert.alert(
+        "Invalid Phone Number",
+        "Please enter a valid 10-digit phone number.",
+        [{ text: "OK", onPress: () => {} }]
+      );
       return;
     }
 
     setLoading(true);
     try {
+      // Check for network connectivity first
+      const netInfo = await NetInfo.fetch();
+      if (!netInfo.isConnected) {
+        Alert.alert(
+          "No Internet Connection",
+          "Please check your internet connection and try again.",
+          [{ text: "OK", onPress: () => {} }]
+        );
+        return;
+      }
+
       // First upload images
       const uploadResult = await uploadImages(images);
       if (!uploadResult.success) {

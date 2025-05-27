@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { checkForRegisteredUser } from "../(Home)/Services/backendoperations";
 import Signup from "./Signup";
@@ -19,14 +21,37 @@ import { LinearGradient } from "expo-linear-gradient";
 import colorThemes from "../theme";
 import { Ionicons } from "@expo/vector-icons";
 import { typography } from "@/app/theme";
+import NetInfo from "@react-native-community/netinfo";
+import { useNotification } from "@/app/context/notificationContext";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [isNew, setIsNew] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [isOffline, setIsOffline] = useState(false);
   const router = useRouter();
   const { forceSetUser } = useAuth();
+  const { showNotification } = useNotification();
+
+  // Add network status listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const wasOffline = isOffline;
+      setIsOffline(!state.isConnected);
+
+      if (!state.isConnected && !wasOffline) {
+        showNotification(
+          "You are offline. Please check your connection.",
+          "warning"
+        );
+      } else if (state.isConnected && wasOffline) {
+        showNotification("You are back online!", "success");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOffline]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,8 +62,13 @@ const Auth = () => {
     // Reset error state
     setEmailError("");
 
+    if (isOffline) {
+      showNotification("Cannot sign in while offline", "error");
+      return;
+    }
+
     // Validate email
-    if (!email) {
+    if (!email.trim()) {
       setEmailError("Please enter your email address");
       return;
     }
@@ -53,14 +83,20 @@ const Auth = () => {
       const isOldUser = await checkForRegisteredUser(email);
 
       if (isOldUser) {
-        forceSetUser();
+        await forceSetUser();
+        showNotification("Welcome back!", "success");
         router.replace("/home");
       } else {
         setIsNew(true);
       }
     } catch (error) {
       console.error("Sign-In Error:", error);
-      setEmailError("An error occurred. Please try again.");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during sign in";
+      setEmailError(errorMessage);
+      showNotification("Sign-in failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }

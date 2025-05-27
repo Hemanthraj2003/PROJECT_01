@@ -5,8 +5,9 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getMyChats } from "./chatServices";
 import { useAuth } from "../context/userContext";
 import colorThemes from "../theme";
@@ -16,6 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { typography } from "@/app/theme";
+import { useNotification } from "@/app/context/notificationContext";
+import NetInfo from "@react-native-community/netinfo";
+import { useServerError } from "../_layout";
 
 type ChatMessage = {
   sentBy: "admin" | "user";
@@ -32,41 +36,102 @@ type Chat = {
   messages: ChatMessage[];
 };
 
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 1000;
+
 const index = () => {
   const [myChats, setMyChats] = useState<Chat[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const pageSize = 10;
+  const [refreshing, setRefreshing] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const reconnectTimer = useRef<NodeJS.Timeout>();
 
   const { user } = useAuth();
   const router = useRouter();
+  const { showNotification } = useNotification();
+  const { setServerError } = useServerError();
 
+  // Add retry mechanism for failed operations
+  const retryOperation = async (operation: () => Promise<void>) => {
+    try {
+      await operation();
+      setRetryCount(0);
+      setError(null);
+    } catch (error) {
+      console.error("Operation failed:", error);
+      if (retryCount < MAX_RETRY_ATTEMPTS) {
+        setRetryCount((prev) => prev + 1);
+        reconnectTimer.current = setTimeout(
+          () => retryOperation(operation),
+          RETRY_DELAY * (retryCount + 1)
+        );
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : "Operation failed";
+        setError(errorMessage);
+        showNotification(errorMessage, "error");
+      }
+    }
+  };
+
+  // Enhanced network status listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const wasOffline = isOffline;
+      setIsOffline(!state.isConnected);
+
+      if (!state.isConnected && !wasOffline) {
+        showNotification(
+          "You are offline. Chat updates will resume when you're back online.",
+          "warning"
+        );
+      } else if (state.isConnected && wasOffline) {
+        showNotification("You are back online! Refreshing chats...", "success");
+        // Reset retry counter when back online
+        setRetryCount(0);
+        handleRetry();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+      }
+    };
+  }, [isOffline]);
+
+  // Enhanced fetch chats with validation and error handling
   const fetchChats = async (page = 1, reset = false) => {
-    if (!user) {
-      console.error("No user available in context. Cannot fetch chats.");
+    if (!user?.id || typeof user.id !== "string") {
+      setError("Session expired. Please log in again.");
       setLoading(false);
       setLoadingMore(false);
       return;
     }
 
-    console.log("Fetching chats for user:", user.id);
+    if (isOffline) {
+      setError("No internet connection. Please check your network.");
+      setLoading(false);
+      setLoadingMore(false);
+      return;
+    }
 
     try {
       if (reset) {
         setLoading(true);
+        setCurrentPage(1);
       } else {
         setLoadingMore(true);
       }
+      setError(null);
 
-      // Ensure user.id is valid
-      if (!user.id || typeof user.id !== "string") {
-        console.error("Invalid user ID:", user.id);
-        throw new Error("Invalid user ID");
-      }
-
-      const { data, pagination } = await getMyChats(user.id, page, pageSize);
+      const { data, pagination } = await getMyChats(user.id, page, 10);
 
       if (data) {
         if (reset || page === 1) {
@@ -84,34 +149,97 @@ const index = () => {
       }
     } catch (error) {
       console.error("Error fetching chats:", error);
+      if (error instanceof Error && error.message === "SERVER_ERROR") {
+        setServerError(true);
+      } else {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load chats. Please try again.";
+
+        setError(errorMessage);
+        showNotification(errorMessage, "error");
+
+        if (!isOffline) {
+          retryOperation(() => fetchChats(page, reset));
+        }
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      setRefreshing(false);
     }
   };
 
+  // Initialize chats with enhanced error handling
   useEffect(() => {
-    // Only fetch chats if user is available
-    if (user) {
-      console.log("User is available, fetching chats for user ID:", user.id);
-
-      // Validate user ID before fetching
-      if (!user.id || typeof user.id !== "string") {
-        console.error("Invalid user ID:", user.id);
+    const initChats = async () => {
+      if (!user?.id) {
+        console.warn("User not available yet");
         setLoading(false);
+        setError("Please log in to view your chats");
         return;
       }
 
-      fetchChats(1, true);
-    } else {
-      console.log("User not available yet, waiting...");
-      setLoading(false);
-    }
-  }, [user]); // Re-run when user changes
+      try {
+        await fetchChats(1, true);
+      } catch (error) {
+        console.error("Error initializing chats:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load chats. Please try again.";
+        setError(errorMessage);
+        showNotification(errorMessage, "error");
+      }
+    };
+
+    initChats();
+  }, [user]);
+
+  // Enhanced retry handler
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(0);
+    fetchChats(1, true);
+  };
+
+  // Enhanced refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    setRetryCount(0);
+    fetchChats(1, true);
+  };
 
   const getUnreadCount = () => {
     return myChats.filter((chat) => !chat.readByUser).length;
   };
+
+  // Render error state
+  const renderError = () => (
+    <View style={styles.errorContainer}>
+      <Ionicons
+        name="alert-circle-outline"
+        size={60}
+        color={colorThemes.greyLight}
+      />
+      <Text style={styles.errorText}>{error}</Text>
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={handleRetry}
+        activeOpacity={0.7}
+      >
+        <LinearGradient
+          colors={[colorThemes.primary, colorThemes.accent2]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.retryGradient}
+        >
+          <Text style={styles.retryText}>Try Again</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.body}>
@@ -146,14 +274,27 @@ const index = () => {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.chatsContainer}
+        contentContainerStyle={[
+          styles.chatsContainer,
+          (!myChats.length || error) && styles.centerContent,
+        ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colorThemes.primary]}
+            tintColor={colorThemes.primary}
+          />
+        }
       >
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colorThemes.primary} />
             <Text style={styles.loadingText}>Loading chats...</Text>
           </View>
+        ) : error ? (
+          renderError()
         ) : myChats.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons
@@ -179,13 +320,26 @@ const index = () => {
                   <SingleChatCard chat={chat} />
                 </View>
               );
-            })}
-
+            })}{" "}
             {/* Load More Button */}
-            {hasMore && (
+            {hasMore && !error && (
               <TouchableOpacity
                 style={styles.loadMoreButton}
-                onPress={() => fetchChats(currentPage)}
+                onPress={async () => {
+                  if (isOffline) {
+                    showNotification("Cannot load more while offline", "error");
+                    return;
+                  }
+                  try {
+                    await fetchChats(currentPage);
+                  } catch (error) {
+                    const errorMessage =
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to load more chats";
+                    showNotification(errorMessage, "error");
+                  }
+                }}
                 disabled={loadingMore}
                 activeOpacity={0.8}
               >
@@ -278,6 +432,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     flexGrow: 1,
   },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -307,6 +465,45 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeights.body1,
     color: colorThemes.textSecondary,
     textAlign: "center",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
+    color: colorThemes.textSecondary,
+    textAlign: "center",
+    marginTop: 12,
+    marginBottom: 24,
+  },
+  retryButton: {
+    borderRadius: 30,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    width: "60%",
+    maxWidth: 200,
+  },
+  retryGradient: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  retryText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
+    color: colorThemes.textLight,
+    letterSpacing: typography.letterSpacing.wide,
   },
   singleChat: {
     borderRadius: 12,
@@ -357,8 +554,8 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontFamily: typography.fonts.bodyBold,
-    fontSize: typography.sizes.body2,
-    lineHeight: typography.lineHeights.body2,
+    fontSize: typography.sizes.body1,
+    lineHeight: typography.lineHeights.body1,
     color: colorThemes.textLight,
     letterSpacing: typography.letterSpacing.wide,
   },

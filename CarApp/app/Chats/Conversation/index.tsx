@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams } from "expo-router/build/hooks";
@@ -22,6 +23,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { typography } from "@/app/theme";
+import { useNotification } from "@/app/context/notificationContext";
+import NetInfo from "@react-native-community/netinfo";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -40,35 +43,155 @@ type Chat = {
   messages: ChatMessage[];
 };
 
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 1000;
+
 const index = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [chat, setChat] = useState<Chat>();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  const [isSendingFailed, setIsSendingFailed] = useState(false);
+  const reconnectTimeout = useRef<NodeJS.Timeout>();
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { showNotification } = useNotification();
 
   const carData: any = JSON.parse(params.carData as string);
 
-  useEffect(() => {
+  // Add retry mechanism for failed operations
+  const retryOperation = async (operation: () => Promise<void>) => {
     try {
-      setChat(JSON.parse(params.chat as string));
+      await operation();
+      setRetryAttempts(0);
+      setError(null);
     } catch (error) {
-      console.error("Error parsing chat data:", error);
-    } finally {
-      setLoading(false);
+      console.error("Operation failed:", error);
+      if (retryAttempts < MAX_RETRY_ATTEMPTS) {
+        setRetryAttempts((prev) => prev + 1);
+        reconnectTimeout.current = setTimeout(
+          () => retryOperation(operation),
+          RETRY_DELAY * (retryAttempts + 1)
+        );
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : "Operation failed";
+        setError(errorMessage);
+        showNotification(errorMessage, "error");
+      }
     }
-  }, []);
+  };
 
+  // Add network status listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const wasOffline = isOffline;
+      setIsOffline(!state.isConnected);
+
+      if (!state.isConnected && !wasOffline) {
+        showNotification(
+          "You are offline. Messages will be queued for sending.",
+          "warning"
+        );
+      } else if (state.isConnected && wasOffline) {
+        showNotification("You are back online!", "success");
+        // Retry any failed operations
+        if (isSendingFailed) {
+          setRetryAttempts(0);
+          setIsSendingFailed(false);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+    };
+  }, [isOffline, isSendingFailed]);
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        if (!params.chat) {
+          throw new Error("No chat data provided");
+        }
+
+        const parsedChat = JSON.parse(params.chat as string);
+        if (!parsedChat?.id || !parsedChat?.messages) {
+          throw new Error("Invalid chat data format");
+        }
+
+        setChat(parsedChat);
+      } catch (error) {
+        console.error("Error initializing chat:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Could not load chat data";
+        setError(errorMessage);
+        showNotification(errorMessage, "error");
+        router.back(); // Return to previous screen on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeChat();
+  }, [params.chat, router, showNotification]);
   const sendMessage = async (message: string) => {
-    if (!chat?.id || !message.trim()) return;
+    // Validate network status
+    if (isOffline) {
+      showNotification(
+        "Message will be sent when you're back online",
+        "warning"
+      );
+      return;
+    }
+
+    // Validate chat and message
+    const trimmedMessage = message.trim();
+    if (!chat?.id) {
+      showNotification("Chat session not found", "error");
+      return;
+    }
+    if (!trimmedMessage) {
+      showNotification("Cannot send empty message", "error");
+      return;
+    }
+    if (trimmedMessage.length > 1000) {
+      // Add reasonable message length limit
+      showNotification(
+        "Message is too long. Maximum 1000 characters allowed.",
+        "error"
+      );
+      return;
+    }
 
     try {
       setSending(true);
-      const response = await sendMessages(chat?.id, message);
+      setIsSendingFailed(false);
+      const response = await sendMessages(chat.id, trimmedMessage);
+
+      if (!response || !response.messages) {
+        throw new Error("Invalid response from server");
+      }
+
       setChat(response);
+      showNotification("Message sent", "success");
     } catch (error) {
       console.error("Error sending message:", error);
+      setIsSendingFailed(true);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to send message. Will retry when possible.";
+      showNotification(errorMessage, "error");
+
+      if (!isOffline) {
+        retryOperation(() => sendMessages(chat.id, trimmedMessage));
+      }
     } finally {
       setSending(false);
     }
