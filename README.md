@@ -26,27 +26,13 @@ npm run setup
 npm run dev
 ```
 
-#### Option 2: Platform-Specific Scripts
+#### Option 2: Individual Services
 
-**For Windows:**
 ```bash
-# 1. Install dependencies for all projects
-setup-dev.bat
-
-# 2. Start all development servers
-start-dev.bat
-```
-
-**For Linux/Mac:**
-```bash
-# 1. Make scripts executable (first time only)
-chmod +x setup-dev.sh start-dev.sh
-
-# 2. Install dependencies for all projects
-./setup-dev.sh
-
-# 3. Start all development servers
-./start-dev.sh
+# Start individual services
+npm run dev:server-only    # Only backend server
+npm run dev:admin-only     # Only admin panel
+npm run dev:carapp-only    # Only mobile app
 ```
 
 #### Option 2: Manual Setup
@@ -186,7 +172,16 @@ npm run dev:carapp         # Start only the CarApp
 # Maintenance
 npm run check              # Check if setup is correct and all dependencies are installed
 npm run clean              # Remove all node_modules and package-lock.json files
+npm run clean:all          # Remove ALL node_modules including root
 npm run reinstall          # Clean and reinstall all dependencies
+npm run reinstall:fresh    # Complete fresh install (including root)
+npm run update             # Update all dependencies across all projects
+
+# Quality Assurance
+npm run lint               # Run linting across all projects
+npm run test:all           # Run tests across all projects
+npm run audit              # Security audit across all projects
+npm run outdated           # Check for outdated packages across all projects
 
 # Building
 npm run build              # Build admin panel for production
