@@ -5,10 +5,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   TextInput,
   ActivityIndicator,
   Animated,
+  Modal,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -66,59 +66,148 @@ const carBrands = [
   "Volvo",
 ];
 
+// Custom Alert Component
+const CustomAlert = ({
+  visible,
+  title,
+  message,
+  buttons,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[];
+  onClose: () => void;
+}) => {
+  return (
+    <Modal
+      transparent={true}
+      animationType="fade"
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.alertOverlay}>
+        <View style={styles.alertCard}>
+          <Text style={styles.alertTitle}>{title}</Text>
+          <Text style={styles.alertMessage}>{message}</Text>
+          <View style={styles.alertButtonContainer}>
+            {buttons.map((button, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.alertButton,
+                  button.style === 'destructive' && styles.alertButtonDestructive,
+                  button.style === 'cancel' && styles.alertButtonCancel,
+                ]}
+                onPress={() => {
+                  button.onPress?.();
+                  onClose();
+                }}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.alertButtonText,
+                    button.style === 'destructive' && styles.alertButtonTextDestructive,
+                    button.style === 'cancel' && styles.alertButtonTextCancel,
+                  ]}
+                >
+                  {button.text}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 export default function SellCars() {
   const { user, forceSetUser } = useAuth();
   const [carBrand, setCarBrand] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
   const [exceptedPrice, setExceptedPrice] = useState<string>("");
-  const [fuelType, setFuelType] = useState<string>("Petrol"); // Initialize with default value
+  const [fuelType, setFuelType] = useState<string>("Petrol");
   const [km, setKm] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [modelYear, setModelYear] = useState<string>("");
   const [ownerName, setOwnerName] = useState<string>("");
-  const [ownerNumber, setOwnerNumber] = useState<string>("1st Owner"); // Initialize with default value
+  const [ownerNumber, setOwnerNumber] = useState<string>("1st Owner");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [phoneNumberError, setPhoneNumberError] = useState<string>("");
   const [registrationNumber, setRegistrationNumber] = useState<string>("");
-  const [transmissionType, setTransmissionType] = useState<string>("Manual"); // Initialize with default value
+  const [transmissionType, setTransmissionType] = useState<string>("Manual");
   const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Manage images separately
   const [images, setImages] = useState<string[]>([]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [cropping, setCropping] = useState(false);
   const [cropUri, setCropUri] = useState<string | null>(null);
   const cropperRef = useRef<any>(null);
 
-  // Add new state for improved image selection flow
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Custom Alert State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string;
+    message: string;
+    buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[];
+  }>({
+    title: '',
+    message: '',
+    buttons: [],
+  });
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[]
+  ) => {
+    setAlertConfig({ title, message, buttons });
+    setAlertVisible(true);
+  };
+
+  const hideCustomAlert = () => {
+    setAlertVisible(false);
+    setAlertConfig({ title: '', message: '', buttons: [] });
+  };
 
   useEffect(() => {
     const getPermissions = async () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        alert("Sorry, we need camera roll permissions to make this work!");
+        showCustomAlert(
+          "Permission Required",
+          "Please grant camera roll access to upload images.",
+          [{ text: "OK", onPress: () => {} }]
+        );
       }
     };
 
     getPermissions();
   }, []);
 
-  // Improved image picking handler
   const pickImage = async () => {
     if (images.length >= 7) {
-      Alert.alert("Too Many Images", "You can only upload up to 7 images.");
+      showCustomAlert(
+        "Too Many Images",
+        "You can only upload up to 7 images.",
+        [{ text: "OK", onPress: () => {} }]
+      );
       return;
     }
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
+        showCustomAlert(
           "Permission Required",
           "Please grant camera roll access to upload images.",
           [{ text: "OK", onPress: () => {} }]
@@ -136,13 +225,16 @@ export default function SellCars() {
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to pick image. Please try again.");
+      showCustomAlert(
+        "Error",
+        "Failed to pick image. Please try again.",
+        [{ text: "OK", onPress: () => {} }]
+      );
     }
   };
 
-  // Remove all images handler
   const removeAllImages = () => {
-    Alert.alert(
+    showCustomAlert(
       "Remove All Images",
       "Are you sure you want to remove all uploaded images?",
       [
@@ -161,7 +253,7 @@ export default function SellCars() {
     setLocation("");
     setModelYear("");
     setOwnerName("");
-    setOwnerNumber("1st Owner"); // Reset to default
+    setOwnerNumber("1st Owner");
     setPhoneNumber("");
     setPhoneNumberError("");
     setRegistrationNumber("");
@@ -170,9 +262,7 @@ export default function SellCars() {
     setImages([]);
   };
 
-  // Validation function to check if all required fields are filled and valid
   const isFormValid = (): boolean => {
-    // Check if phone number is exactly 10 digits
     const isPhoneNumberValid = phoneNumber.length === 10;
 
     return Boolean(
@@ -184,18 +274,15 @@ export default function SellCars() {
         location &&
         modelYear &&
         ownerName &&
-        isPhoneNumberValid && // Validate phone number length
+        isPhoneNumberValid &&
         registrationNumber &&
         description
-      // fuelType and transmissionType are pre-filled with default values
     );
   };
 
-  // Submit handler
   const handleSubmit = async (): Promise<void> => {
-    // Check if all required fields are filled
     if (!isFormValid()) {
-      Alert.alert(
+      showCustomAlert(
         "Required Fields Missing",
         "Please fill in all required fields before submitting.",
         [{ text: "OK", onPress: () => {} }]
@@ -204,7 +291,7 @@ export default function SellCars() {
     }
 
     if (phoneNumber.length !== 10) {
-      Alert.alert(
+      showCustomAlert(
         "Invalid Phone Number",
         "Please enter a valid 10-digit phone number.",
         [{ text: "OK", onPress: () => {} }]
@@ -214,10 +301,9 @@ export default function SellCars() {
 
     setLoading(true);
     try {
-      // Check for network connectivity first
       const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected) {
-        Alert.alert(
+        showCustomAlert(
           "No Internet Connection",
           "Please check your internet connection and try again.",
           [{ text: "OK", onPress: () => {} }]
@@ -225,7 +311,6 @@ export default function SellCars() {
         return;
       }
 
-      // First upload images
       const uploadResult = await uploadImages(images);
       if (!uploadResult.success) {
         throw new Error(
@@ -245,7 +330,7 @@ export default function SellCars() {
         location: location,
         modelYear: modelYear,
         ownerName: ownerName,
-        ownerNumber: ownerNumber, // Add owner number field
+        ownerNumber: ownerNumber,
         phoneNumber: phoneNumber,
         postedBy: user?.id,
         postedDate: new Date().toISOString().split("T")[0],
@@ -258,7 +343,7 @@ export default function SellCars() {
       console.log("Car Data:", finalFormData);
       const response = await postCarForApproval(finalFormData);
       if (response.success) {
-        setShowSuccess(true); // Show modern success overlay
+        setShowSuccess(true);
         const storedData = await AsyncStorage.getItem("userDetails");
         if (storedData != null) {
           const data = JSON.parse(storedData);
@@ -269,16 +354,16 @@ export default function SellCars() {
         clearData();
       }
     } catch (error) {
-      Alert.alert(
+      showCustomAlert(
         "Error",
-        error instanceof Error ? error.message : "Failed to submit car listing"
+        error instanceof Error ? error.message : "Failed to submit car listing",
+        [{ text: "OK", onPress: () => {} }]
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate years for the year picker (from 1990 to current year)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1989 }, (_, i) =>
     (1990 + i).toString()
@@ -318,7 +403,6 @@ export default function SellCars() {
           <View style={styles.headerAccentBar} />
         </View>
 
-        {/* Image Upload Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Vehicle Photos</Text>
@@ -390,14 +474,11 @@ export default function SellCars() {
           </View>
         </View>
 
-        {/* Vehicle Details Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Vehicle Details</Text>
           </View>
 
-          {/* Car Brand */}
-          {/* Car Brand - Dropdown */}
           <View style={styles.inputPicker}>
             <Text style={styles.pickerLabel}>Car Brand</Text>
             <Picker
@@ -416,7 +497,6 @@ export default function SellCars() {
             </Picker>
           </View>
 
-          {/* Car Model */}
           <TextInput
             value={carModel}
             onChangeText={(text) => setCarModel(text)}
@@ -425,9 +505,7 @@ export default function SellCars() {
             style={styles.textInput}
           />
 
-          {/* Model Year - Picker */}
           <View style={styles.inputPicker}>
-            {/* <Text style={styles.pickerLabel}>Model Year</Text> */}
             <Picker
               dropdownIconColor={colorThemes.grey}
               selectedValue={modelYear}
@@ -444,7 +522,6 @@ export default function SellCars() {
             </Picker>
           </View>
 
-          {/* Registration Number */}
           <TextInput
             value={registrationNumber}
             onChangeText={(text) => setRegistrationNumber(text)}
@@ -453,9 +530,7 @@ export default function SellCars() {
             style={[styles.textInput, { marginBottom: 20 }]}
           />
 
-          {/* Fuel Type and Transmission Type in two columns */}
           <View style={styles.formGrid}>
-            {/* Left Column - Fuel Type */}
             <View style={styles.formColumn}>
               <View style={styles.inputPicker}>
                 <Text style={styles.pickerLabel}>Fuel Type</Text>
@@ -473,7 +548,6 @@ export default function SellCars() {
               </View>
             </View>
 
-            {/* Right Column - Transmission Type */}
             <View style={styles.formColumn}>
               <View style={styles.inputPicker}>
                 <Text style={styles.pickerLabel}>Transmission Type</Text>
@@ -490,16 +564,13 @@ export default function SellCars() {
           </View>
         </View>
 
-        {/* Pricing & Specifications Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Pricing & Specifications</Text>
           </View>
 
           <View style={styles.formGrid}>
-            {/* Left Column */}
             <View style={styles.formColumn}>
-              {/* Expected Price */}
               <TextInput
                 value={exceptedPrice}
                 onChangeText={(text) => {
@@ -513,9 +584,7 @@ export default function SellCars() {
               />
             </View>
 
-            {/* Right Column */}
             <View style={styles.formColumn}>
-              {/* Km Driven */}
               <TextInput
                 value={km}
                 onChangeText={(text) => {
@@ -530,7 +599,6 @@ export default function SellCars() {
             </View>
           </View>
 
-          {/* Description - Full Width */}
           <TextInput
             value={description}
             onChangeText={(text) => setDescription(text)}
@@ -542,13 +610,11 @@ export default function SellCars() {
           />
         </View>
 
-        {/* Owner Information Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Owner Information</Text>
           </View>
 
-          {/* Owner Number - Dropdown */}
           <View style={styles.inputPicker}>
             <Text style={styles.pickerLabel}>Owner Number</Text>
             <Picker
@@ -565,7 +631,6 @@ export default function SellCars() {
             </Picker>
           </View>
 
-          {/* Owner Name - Full Width */}
           <TextInput
             value={ownerName}
             onChangeText={(text) => setOwnerName(text)}
@@ -574,7 +639,6 @@ export default function SellCars() {
             style={styles.textInput}
           />
 
-          {/* Owner Phone Number - Full Width */}
           <View>
             <TextInput
               value={phoneNumber}
@@ -582,7 +646,6 @@ export default function SellCars() {
                 const cleanedText = text.replace(/[^0-9]/g, "");
                 setPhoneNumber(cleanedText);
 
-                // Validate phone number length
                 if (cleanedText.length > 0 && cleanedText.length !== 10) {
                   setPhoneNumberError("Phone number must be 10 digits");
                 } else {
@@ -605,7 +668,6 @@ export default function SellCars() {
             ) : null}
           </View>
 
-          {/* Address - Full Width as TextArea */}
           <TextInput
             value={location}
             onChangeText={(text) => setLocation(text)}
@@ -617,8 +679,7 @@ export default function SellCars() {
           />
         </View>
 
-        {/* Submit Button */}
-        <Animated.View style={[styles.submitButtonContainer, { transform: [{ scale: scaleAnim }] }]}> 
+        <Animated.View style={[styles.submitButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
           <TouchableOpacity
             activeOpacity={0.85}
             onPressIn={isFormValid() ? handlePressIn : undefined}
@@ -670,31 +731,25 @@ export default function SellCars() {
           </View>
         </View>
       )}
-      {/* Improved Image Modal */}
       {imageModalVisible && selectedImage && (
         <View style={styles.cropperOverlay}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 18, padding: 18, width: '90%', alignItems: 'center', elevation: 8 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Preview Image</Text>
-            <View style={{ width: 240, height: 180, borderRadius: 12, overflow: 'hidden', marginBottom: 16, backgroundColor: '#eee' }}>
-              <Animated.Image source={{ uri: selectedImage }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          <View style={styles.cropperModal}>
+            <Text style={styles.modalTitle}>Preview Image</Text>
+            <View style={styles.imagePreview}>
+              <Animated.Image source={{ uri: selectedImage }} style={styles.previewImage} resizeMode="cover" />
             </View>
-            {isProcessing && <ActivityIndicator size="large" color={colorThemes.primary} style={{ marginBottom: 12 }} />}
-            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', gap: 8 }}>
-              {/* Cancel */}
+            {isProcessing && <ActivityIndicator size="large" color={colorThemes.primary} style={styles.processingIndicator} />}
+            <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.greyLight, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
-                onPress={() => {
-                  setImageModalVisible(false);
-                  setSelectedImage(null);
-                }}
+                style={[styles.cropperFooterBtn, styles.retakeBtn]}
+                onPress={pickImage}
                 disabled={isProcessing}
               >
-                <FontAwesome name="times" size={18} color={colorThemes.textPrimary} style={{ marginRight: 6 }} />
-                <Text style={{ color: colorThemes.textPrimary, fontWeight: 'bold' }}>Cancel</Text>
+                <FontAwesome name="refresh" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Retake</Text>
               </TouchableOpacity>
-              {/* Crop */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                style={[styles.cropperFooterBtn, styles.cropBtn]}
                 onPress={async () => {
                   setIsProcessing(true);
                   setImageModalVisible(false);
@@ -704,25 +759,25 @@ export default function SellCars() {
                 }}
                 disabled={isProcessing}
               >
-                <FontAwesome name="crop" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
-                <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Crop</Text>
+                <FontAwesome name="crop" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Crop</Text>
               </TouchableOpacity>
-              {/* Retake */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.accent2, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
-                onPress={pickImage}
+                style={[styles.cropperFooterBtn, styles.cancelBtn]}
+                onPress={() => {
+                  setImageModalVisible(false);
+                  setSelectedImage(null);
+                }}
                 disabled={isProcessing}
               >
-                <FontAwesome name="refresh" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
-                <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Retake</Text>
+                <FontAwesome name="times" size={18} color={colorThemes.textPrimary} style={styles.buttonIcon} />
+                <Text style={[styles.buttonText, { color: colorThemes.textPrimary }]}>Cancel</Text>
               </TouchableOpacity>
-              {/* Use Original */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.success || '#22c55e', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                style={[styles.cropperFooterBtn, styles.useOriginalBtn]}
                 onPress={async () => {
                   setIsProcessing(true);
                   setImageModalVisible(false);
-                  // Use original image as is
                   const compressedImage = await ImageManipulator.manipulateAsync(
                     selectedImage!,
                     [{ resize: { width: 800 } }],
@@ -734,14 +789,13 @@ export default function SellCars() {
                 }}
                 disabled={isProcessing}
               >
-                <FontAwesome name="check" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
-                <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Use Original</Text>
+                <FontAwesome name="check" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Use Original</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       )}
-      {/* Cropping Modal */}
       {cropping && cropUri && (
         <View style={styles.cropperOverlay} key={cropUri}>
           <ImageCropper
@@ -770,7 +824,11 @@ export default function SellCars() {
                 );
                 setImages((prev) => [...prev, compressedImage.uri]);
               } catch (e) {
-                Alert.alert('Error', 'Failed to process cropped image.');
+                showCustomAlert(
+                  'Error',
+                  'Failed to process cropped image.',
+                  [{ text: "OK", onPress: () => {} }]
+                );
               }
               setIsProcessing(false);
             }}
@@ -802,6 +860,13 @@ export default function SellCars() {
           />
         </View>
       )}
+      <CustomAlert
+        visible={alertVisible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        onClose={hideCustomAlert}
+      />
     </View>
   );
 }
@@ -838,7 +903,7 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.accent2,
     borderRadius: 2,
     marginTop: 4,
-    marginLeft: 38, // aligns under text (icon width + margin)
+    marginLeft: 38,
     marginBottom: 6,
   },
   sectionContainer: {
@@ -930,11 +995,6 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: 4,
   },
-  uploadMoreButtonContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginTop: 10,
-  },
   uploadMoreText: {
     fontFamily: typography.fonts.body,
     fontSize: typography.sizes.body2,
@@ -1023,10 +1083,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 38,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colorThemes.greyLight, // use a solid light grey
+    backgroundColor: colorThemes.greyLight,
     borderRadius: 18,
     overflow: 'hidden',
-    // Remove opacity, border, and shadow
     borderWidth: 0,
     shadowColor: 'transparent',
   },
@@ -1114,23 +1173,146 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cropperFooter: {
-    position: 'absolute',
-    bottom: 32,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  cropperModal: {
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 18,
+    width: '90%',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    zIndex: 300,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontFamily: typography.fonts.heading,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colorThemes.textPrimary,
+    marginBottom: 10,
+  },
+  imagePreview: {
+    width: 240,
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+    backgroundColor: '#eee',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  processingIndicator: {
+    marginBottom: 12,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
   },
   cropperFooterBtn: {
     flex: 1,
-    marginHorizontal: 6,
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     elevation: 2,
+    minWidth: '45%',
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  buttonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body2,
+    fontWeight: 'bold',
+    color: colorThemes.textLight,
+  },
+  cancelBtn: {
+    backgroundColor: colorThemes.greyLight,
+  },
+  cropBtn: {
+    backgroundColor: colorThemes.primary,
+  },
+  retakeBtn: {
+    backgroundColor: colorThemes.accent2,
+  },
+  useOriginalBtn: {
+    backgroundColor: colorThemes.success || '#22c55e',
+  },
+  // Custom Alert Styles
+  alertOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 300,
+  },
+  alertCard: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: colorThemes.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  alertTitle: {
+    fontFamily: typography.fonts.heading,
+    fontSize: typography.sizes.h3,
+    color: colorThemes.textPrimary,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertMessage: {
+    fontFamily: typography.fonts.body,
+    fontSize: typography.sizes.body1,
+    color: colorThemes.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  alertButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+  },
+  alertButton: {
+    flex: 1,
+    backgroundColor: colorThemes.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertButtonCancel: {
+    backgroundColor: colorThemes.greyLight,
+  },
+  alertButtonDestructive: {
+    backgroundColor: colorThemes.error,
+  },
+  alertButtonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    color: colorThemes.textLight,
+    fontWeight: 'bold',
+  },
+  alertButtonTextCancel: {
+    color: colorThemes.textPrimary,
+  },
+  alertButtonTextDestructive: {
+    color: colorThemes.textLight,
   },
 });
