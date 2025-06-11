@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
   Animated,
+  Modal as RNModal,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { StatusBar } from "expo-status-bar";
@@ -23,15 +24,36 @@ import { typography } from "@/app/theme";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const { user, setUser, removeUser } = useAuth();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     if (visible && !user) {
       loadUserData();
+    }
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.95);
     }
   }, [visible]);
 
@@ -50,15 +72,15 @@ const Navbar = () => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = async () => {
     try {
+      setLogoutModalVisible(false);
       setVisible(false);
-
-      // Use the removeUser function from the auth context
-      // This ensures proper cleanup of the user state
       await removeUser();
-
-      // Navigate to the login screen
       router.replace("/");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -67,10 +89,14 @@ const Navbar = () => {
     }
   };
 
+  const cancelLogout = () => {
+    setLogoutModalVisible(false);
+  };
+
   return (
     <View>
       <LinearGradient
-        colors={[colorThemes.primary, colorThemes.accent2]}
+        colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={style.navbar}
@@ -92,7 +118,7 @@ const Navbar = () => {
               <Ionicons
                 name="chatbox-ellipses-outline"
                 size={26}
-                color={colorThemes.textLight}
+                color={colorThemes.textLight || "#FFFFFF"}
                 style={{ opacity: 0.9 }}
               />
               <View style={style.badge} />
@@ -105,7 +131,7 @@ const Navbar = () => {
               <AntDesign
                 name="user"
                 size={24}
-                color={colorThemes.textLight}
+                color={colorThemes.textLight || "#FFFFFF"}
                 style={{ opacity: 0.9 }}
               />
             </TouchableOpacity>
@@ -113,25 +139,33 @@ const Navbar = () => {
         </View>
       </LinearGradient>
 
-      {/* PROFILE MODAL */}
       <Portal>
+        {/* Profile Modal */}
         <Modal
           visible={visible}
           dismissable
           onDismiss={() => setVisible(false)}
           contentContainerStyle={style.modal}
         >
-          <View style={style.modalContent}>
+          <Animated.View
+            style={[
+              style.modalContent,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
             <View style={style.modalHeader}>
               <Text style={style.title}>Profile</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
-                <AntDesign name="close" size={24} color={colorThemes.grey} />
+                <AntDesign name="close" size={24} color={colorThemes.grey || "#A9A9A9"} />
               </TouchableOpacity>
             </View>
 
             {loading ? (
               <View style={style.loadingContainer}>
-                <ActivityIndicator size="large" color={colorThemes.primary} />
+                <ActivityIndicator size="large" color={colorThemes.primary || "#FF6200"} />
               </View>
             ) : (
               <ScrollView
@@ -142,7 +176,7 @@ const Navbar = () => {
                 <View style={style.profileContainer}>
                   <View style={style.avatarContainer}>
                     <LinearGradient
-                      colors={[colorThemes.primary, colorThemes.accent2]}
+                      colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={style.avatar}
@@ -154,30 +188,70 @@ const Navbar = () => {
                   </View>
 
                   <View style={style.infoSection}>
-                    <Text style={style.label}>Name</Text>
-                    <Text style={style.text}>{user?.name || "-"}</Text>
+                    <View style={style.labelContainer}>
+                      <AntDesign
+                        name="user"
+                        size={16}
+                        color={colorThemes.textSecondary || "#666666"}
+                        style={style.labelIcon}
+                      />
+                      <Text style={style.label}>Name</Text>
+                    </View>
+                    <Text style={style.text}>{user?.name || "Not set"}</Text>
                   </View>
 
                   <View style={style.infoSection}>
-                    <Text style={style.label}>Phone</Text>
-                    <Text style={style.text}>{user?.phone || "-"}</Text>
+                    <View style={style.labelContainer}>
+                      <Ionicons
+                        name="call-outline"
+                        size={16}
+                        color={colorThemes.textSecondary || "#666666"}
+                        style={style.labelIcon}
+                      />
+                      <Text style={style.label}>Phone</Text>
+                    </View>
+                    <Text style={style.text}>{user?.phone || "Not set"}</Text>
                   </View>
 
                   <View style={style.divider} />
 
                   <View style={style.infoSection}>
-                    <Text style={style.label}>Address</Text>
-                    <Text style={style.text}>{user?.address || "-"}</Text>
+                    <View style={style.labelContainer}>
+                      <Ionicons
+                        name="location-outline"
+                        size={16}
+                        color={colorThemes.textSecondary || "#666666"}
+                        style={style.labelIcon}
+                      />
+                      <Text style={style.label}>Address</Text>
+                    </View>
+                    <Text style={style.text}>{user?.address || "Not set"}</Text>
                   </View>
 
                   <View style={style.infoSection}>
-                    <Text style={style.label}>City</Text>
-                    <Text style={style.text}>{user?.city || "-"}</Text>
+                    <View style={style.labelContainer}>
+                      <Ionicons
+                        name="business-outline"
+                        size={16}
+                        color={colorThemes.textSecondary || "#666666"}
+                        style={style.labelIcon}
+                      />
+                      <Text style={style.label}>City</Text>
+                    </View>
+                    <Text style={style.text}>{user?.city || "Not set"}</Text>
                   </View>
 
                   <View style={style.infoSection}>
-                    <Text style={style.label}>State</Text>
-                    <Text style={style.text}>{user?.state || "-"}</Text>
+                    <View style={style.labelContainer}>
+                      <Ionicons
+                        name="map-outline"
+                        size={16}
+                        color={colorThemes.textSecondary || "#666666"}
+                        style={style.labelIcon}
+                      />
+                      <Text style={style.label}>State</Text>
+                    </View>
+                    <Text style={style.text}>{user?.state || "Not set"}</Text>
                   </View>
                 </View>
               </ScrollView>
@@ -185,7 +259,7 @@ const Navbar = () => {
 
             <TouchableOpacity onPress={handleLogout}>
               <LinearGradient
-                colors={[colorThemes.primary, colorThemes.accent2]}
+                colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={style.logoutButton}
@@ -207,9 +281,38 @@ const Navbar = () => {
             >
               {snackbarMessage}
             </Snackbar>
-          </View>
+          </Animated.View>
         </Modal>
       </Portal>
+
+      {/* Logout Confirmation Modal */}
+      <RNModal
+        visible={logoutModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={style.modalOverlay}>
+          <View style={style.logoutModalContent}>
+            <Text style={style.logoutTitle}>Confirm Logout</Text>
+            <Text style={style.logoutMessage}>
+              Are you sure you want to log out?
+            </Text>
+            <View style={style.buttonContainer}>
+              <TouchableOpacity onPress={cancelLogout}>
+                <View style={style.cancelButton}>
+                  <Text style={style.buttonText}>Cancel</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={confirmLogout}>
+                <View style={style.confirmButton}>
+                  <Text style={style.buttonText}>Logout</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </RNModal>
     </View>
   );
 };
@@ -257,7 +360,7 @@ const style = StyleSheet.create({
     right: 8,
     width: 8,
     height: 8,
-    backgroundColor: colorThemes.accent1,
+    backgroundColor: colorThemes.accent1 || "#FF0000",
     borderRadius: 4,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
@@ -267,12 +370,11 @@ const style = StyleSheet.create({
     backgroundColor: "transparent",
   },
   modalContent: {
-    backgroundColor: colorThemes.background,
+    backgroundColor: colorThemes.background || "#FFFFFF",
     borderRadius: 15,
     padding: 20,
     maxHeight: "90%",
     minHeight: "90%",
-    // Add shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.2,
@@ -286,7 +388,7 @@ const style = StyleSheet.create({
     marginBottom: 24,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colorThemes.backgroundDark,
+    borderBottomColor: colorThemes.backgroundDark || "#E0E0E0",
   },
   scrollView: {
     flex: 1,
@@ -294,6 +396,7 @@ const style = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: "center",
   },
   container: {
     flex: 1,
@@ -307,7 +410,7 @@ const style = StyleSheet.create({
     fontFamily: typography.fonts.heading,
     fontSize: typography.sizes.h2,
     lineHeight: typography.lineHeights.h2,
-    color: colorThemes.primary,
+    color: colorThemes.primary || "#FF6200",
   },
   profileContainer: {
     paddingBottom: 20,
@@ -322,7 +425,6 @@ const style = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    // Add shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
@@ -333,28 +435,35 @@ const style = StyleSheet.create({
     fontFamily: typography.fonts.bodyBold,
     fontSize: typography.sizes.h3,
     lineHeight: typography.lineHeights.h3,
-    color: colorThemes.textLight,
+    color: colorThemes.textLight || "#FFFFFF",
   },
   infoSection: {
-    marginBottom: 18,
+    marginBottom: 20,
+  },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  labelIcon: {
+    marginRight: 8,
   },
   label: {
     fontFamily: typography.fonts.body,
     fontSize: typography.sizes.caption,
     lineHeight: typography.lineHeights.caption,
-    color: colorThemes.textSecondary,
-    marginBottom: 4,
+    color: colorThemes.textSecondary || "#666666",
   },
   text: {
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
     fontSize: typography.sizes.body1,
     lineHeight: typography.lineHeights.body1,
-    color: colorThemes.textPrimary,
+    color: colorThemes.textPrimary || "#000000",
   },
   divider: {
     height: 1,
-    backgroundColor: colorThemes.backgroundDark,
-    marginVertical: 18,
+    backgroundColor: colorThemes.backgroundDark || "#E0E0E0",
+    marginVertical: 20,
   },
   logoutButton: {
     flexDirection: "row",
@@ -363,7 +472,6 @@ const style = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     marginTop: 16,
-    // Add shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -377,7 +485,60 @@ const style = StyleSheet.create({
     fontFamily: typography.fonts.bodyBold,
     fontSize: typography.sizes.body1,
     lineHeight: typography.lineHeights.body1,
-    color: colorThemes.textLight,
+    color: colorThemes.textLight || "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoutModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 15,
+    padding: 20,
+    width: "80%",
+    alignItems: "center",
+  },
+  logoutTitle: {
+    fontSize: 20,
+    color: "#FF6200",
+    fontWeight: "600",
+    marginBottom: 15,
+  },
+  logoutMessage: {
+    fontSize: 16,
+    color: "#000000",
+    marginBottom: 25,
+    textAlign: "center",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 15,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#A9A9A9",
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: "#FF6200",
+  },
+  buttonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "700",
+    textAlign: "center",
   },
 });
 export default Navbar;
