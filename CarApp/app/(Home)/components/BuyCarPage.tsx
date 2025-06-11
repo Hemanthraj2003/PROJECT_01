@@ -11,6 +11,7 @@ import {
   ViewStyle,
   TextStyle,
   Pressable,
+  Animated,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -76,6 +77,7 @@ export default function BuyCarPage() {
   const { user, forceSetUser } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const car: Car | null = params.data
     ? JSON.parse(params.data as string)
@@ -95,6 +97,21 @@ export default function BuyCarPage() {
     setCurrentIndex(index);
   };
 
+  const animateLike = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const toggleLikedCars = async () => {
     if (!user || !car) return;
     setLiked((liked) => {
@@ -107,8 +124,8 @@ export default function BuyCarPage() {
         const updatedData = await updateUserData(userData);
         forceSetUser();
       };
-
       updateBackend();
+      if (!liked) animateLike();
       return !liked;
     });
   };
@@ -165,22 +182,30 @@ export default function BuyCarPage() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colorThemes.backgroundLight }}>
       <Navbar />
       <ScrollView
-        style={{ padding: 5, backgroundColor: colorThemes.backgroundLight }}
+        style={{ padding: 5 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
       >
         {/* Image Carousel section */}
         <View
           style={{
             flex: 1,
             height: 280,
-            marginBottom: 10,
+            marginBottom: 16,
             backgroundColor: "white",
-            elevation: 0.2,
+            borderRadius: 18,
+            shadowColor: colorThemes.primary,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.1,
+            shadowRadius: 16,
+            elevation: 8,
             justifyContent: "center",
             alignItems: "center",
-            width: Dimensions.get("screen").width,
+            width: Dimensions.get("screen").width - 16,
+            alignSelf: "center",
           }}
         >
           <FlatList
@@ -199,49 +224,59 @@ export default function BuyCarPage() {
         {/* Pagination dots */}
         <View
           style={{
-            marginVertical: 5,
+            marginVertical: 8,
             flexDirection: "row",
             justifyContent: "center",
             alignItems: "center",
-            gap: 5,
+            gap: 7,
           }}
         >
           {(car.images || []).map((_, index) => (
             <View
               key={index}
-              style={[
-                {
-                  backgroundColor: "grey",
-                  borderRadius: "50%",
-                  width: 10,
-                  height: 10,
-                },
-                currentIndex === index && {
-                  backgroundColor: colorThemes.primary2,
-                  width: 12,
-                  height: 12,
-                },
-              ]}
+              style={{
+                backgroundColor:
+                  currentIndex === index
+                    ? colorThemes.primary
+                    : colorThemes.greyLight,
+                borderRadius: 50,
+                width: currentIndex === index ? 14 : 10,
+                height: currentIndex === index ? 14 : 10,
+                marginHorizontal: 2,
+                borderWidth: currentIndex === index ? 2 : 0,
+                borderColor: colorThemes.primaryLight,
+                transitionDuration: "0.3s",
+              }}
             />
           ))}
         </View>
 
-        {/* Car details */}
-        <View
+        {/* Car details card */}
+        <LinearGradient
+          colors={colorThemes.gradientPrimary as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{
-            backgroundColor: colorThemes.background,
-            marginVertical: 4,
+            borderRadius: 18,
+            marginVertical: 8,
             marginHorizontal: 10,
-            elevation: 0.2,
-            padding: 10,
-            borderRadius: 7,
+            padding: 18,
+            shadowColor: colorThemes.primary,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.1,
+            shadowRadius: 16,
+            elevation: 8,
           }}
         >
-          <Text style={[styles.price]}>₹ {car.exceptedPrice}</Text>
-          <Text style={[styles.model]}>{car.carModel}</Text>
-
-          <Text style={[styles.year]}>{car.modelYear}</Text>
-
+          <Text style={[styles.price, { color: colorThemes.textLight }]}>
+            ₹ {car.exceptedPrice}
+          </Text>
+          <Text style={[styles.model, { color: colorThemes.textLight }]}>
+            {car.carModel}
+          </Text>
+          <Text style={[styles.year, { color: colorThemes.textLight }]}>
+            {car.modelYear}
+          </Text>
           <View
             style={{
               flexDirection: "row",
@@ -249,7 +284,6 @@ export default function BuyCarPage() {
               padding: 12,
               marginTop: 18,
               alignItems: "center",
-              margin: "auto",
               borderTopWidth: 0.21,
               borderTopColor: colorThemes.greyLight,
             }}
@@ -259,9 +293,11 @@ export default function BuyCarPage() {
               <Ionicons
                 name="funnel-outline"
                 size={22}
-                color={colorThemes.textSecondary}
+                color={colorThemes.textLight}
               />
-              <Text style={styles.specText}>{car.fuelType}</Text>
+              <Text style={[styles.specText, { color: colorThemes.textLight }]}>
+                {car.fuelType}
+              </Text>
             </View>
 
             {/* Mileage */}
@@ -269,9 +305,9 @@ export default function BuyCarPage() {
               <Ionicons
                 name="speedometer-outline"
                 size={22}
-                color={colorThemes.textSecondary}
+                color={colorThemes.textLight}
               />
-              <Text style={styles.specText}>
+              <Text style={[styles.specText, { color: colorThemes.textLight }]}>
                 {(car.km / 1000).toFixed(0)}k km
               </Text>
             </View>
@@ -281,15 +317,30 @@ export default function BuyCarPage() {
               <EvilIcons
                 name="gear"
                 size={22}
-                color={colorThemes.textSecondary}
+                color={colorThemes.textLight}
               />
-              <Text style={styles.specText}>{car.transmissionType}</Text>
+              <Text style={[styles.specText, { color: colorThemes.textLight }]}>
+                {car.transmissionType}
+              </Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Overview */}
-        <View style={styles.sectionContainer}>
+        <View
+          style={[
+            styles.sectionContainer,
+            {
+              borderRadius: 18,
+              marginTop: 10,
+              shadowColor: colorThemes.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 4,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Overview</Text>
           </View>
@@ -308,7 +359,7 @@ export default function BuyCarPage() {
               </Text>
             </View>
 
-            {/*  Owner */}
+            {/* Owner */}
             <View style={[styles.overviewBlocks, { gap: 4, marginStart: 5 }]}>
               <Feather
                 name="users"
@@ -332,7 +383,20 @@ export default function BuyCarPage() {
         </View>
 
         {/* Description */}
-        <View style={styles.sectionContainer}>
+        <View
+          style={[
+            styles.sectionContainer,
+            {
+              borderRadius: 18,
+              marginTop: 10,
+              shadowColor: colorThemes.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 4,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Description</Text>
           </View>
@@ -345,13 +409,33 @@ export default function BuyCarPage() {
       </ScrollView>
 
       {/* Interested Button */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity onPress={handleInterested} style={styles.chatButton}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colorThemes.backgroundLight,
+            borderTopLeftRadius: 18,
+            borderTopRightRadius: 18,
+            shadowColor: colorThemes.primary,
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 8,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={handleInterested}
+          style={[
+            styles.chatButton,
+            { borderRadius: 18, overflow: "hidden", marginRight: 8 },
+          ]}
+        >
           <LinearGradient
             colors={[colorThemes.primary, colorThemes.accent2]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.chatGradient}
+            style={[styles.chatGradient, { borderRadius: 18 }]}
           >
             <View style={styles.chatContent}>
               <Ionicons
@@ -366,13 +450,30 @@ export default function BuyCarPage() {
         </TouchableOpacity>
 
         <View style={styles.likeButtonContainer}>
-          <TouchableOpacity onPress={toggleLikedCars}>
-            <Ionicons
-              name={liked ? "heart" : "heart-outline"}
-              size={40}
-              color={colorThemes.primary}
-              style={{ paddingRight: 10 }}
-            />
+          <TouchableOpacity
+            onPress={toggleLikedCars}
+            style={{
+              borderRadius: 50,
+              backgroundColor: liked
+                ? colorThemes.primaryLight
+                : colorThemes.background,
+              padding: 6,
+              shadowColor: colorThemes.primary,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: liked ? 0.18 : 0.08,
+              shadowRadius: 8,
+              elevation: liked ? 6 : 2,
+              // transitionDuration: "0.3s",
+            }}
+          >
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <Ionicons
+                name={liked ? "heart" : "heart-outline"}
+                size={32}
+                color={liked ? colorThemes.primary : colorThemes.primaryDark}
+                style={{ paddingRight: 0 }}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       </View>
@@ -388,6 +489,7 @@ const styles = StyleSheet.create({
   },
   greytext: {
     color: colorThemes.textSecondary,
+    fontFamily: typography.fonts.bodyBold,
   },
   overviewBlocks: {
     flexDirection: "row",
@@ -396,19 +498,26 @@ const styles = StyleSheet.create({
   },
   price: {
     fontFamily: typography.fonts.heading,
-    fontSize: typography.sizes.h2,
+    fontWeight: "bold", // Back to normal bold
+    fontSize: typography.sizes.h2, // Slightly smaller
     lineHeight: typography.lineHeights.h2,
     color: colorThemes.textPrimary,
+    letterSpacing: 0.5, // Subtle spacing
+    textShadowColor: colorThemes.primaryDark, // Keep subtle shadow
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   model: {
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.subtitle1,
     lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textSecondary,
     marginVertical: 4,
   },
   year: {
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.body2,
     lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
@@ -422,7 +531,8 @@ const styles = StyleSheet.create({
     color: colorThemes.textSecondary,
     minWidth: 60,
     textAlign: "center",
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.body2,
     lineHeight: typography.lineHeights.body2,
   },
@@ -440,24 +550,28 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: typography.fonts.heading,
+    fontWeight: "bold",
     fontSize: typography.sizes.subtitle1,
     lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textPrimary,
   },
   overviewText: {
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.body2,
     lineHeight: typography.lineHeights.body2,
     color: colorThemes.textSecondary,
   },
   descriptionText: {
-    fontFamily: typography.fonts.body,
+    fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.body1,
     lineHeight: typography.lineHeights.body1,
     color: colorThemes.textPrimary,
   },
   contactText: {
     fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.body2,
     lineHeight: typography.lineHeights.body2,
     color: colorThemes.primary,
@@ -496,6 +610,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontFamily: typography.fonts.bodyBold,
+    fontWeight: "bold",
     fontSize: typography.sizes.subtitle1,
     lineHeight: typography.lineHeights.subtitle1,
     color: colorThemes.textLight,

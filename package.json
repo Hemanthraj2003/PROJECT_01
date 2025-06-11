@@ -74,5 +74,8 @@
     "CarApp",
     "admin_pannel",
     "SERVER"
-  ]
+  ],
+  "dependencies": {
+    "expo-image-cropper": "^1.0.9"
+  }
 }
