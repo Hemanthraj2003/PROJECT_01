@@ -347,49 +347,43 @@ export default function SellCars() {
                   <DeleteableCarousol images={images} setImages={setImages} />
                 </View>
                 <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 8 }}>
-                  <TouchableOpacity
-                    style={styles.uploadMoreButtonContainer}
-                    onPress={pickImage}
-                    disabled={images.length >= 7}
-                  >
-                    <View
-                      style={[
-                        styles.uploadButton,
-                        images.length >= 7 && styles.disabledUploadButton,
-                      ]}
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <TouchableOpacity
+                      style={[styles.uploadButton, images.length >= 7 && styles.disabledUploadButton]}
+                      onPress={pickImage}
+                      disabled={images.length >= 7}
                     >
                       <FontAwesome
                         name="cloud-upload"
                         size={20}
-                        color={
-                          images.length < 7 ? colorThemes.primary : colorThemes.grey
-                        }
+                        color={images.length < 7 ? colorThemes.primary : colorThemes.grey}
                       />
                       <Text
                         style={[
                           styles.uploadMoreText,
                           {
-                            color:
-                              images.length < 7
-                                ? colorThemes.primary
-                                : colorThemes.grey,
+                            color: images.length < 7 ? colorThemes.primary : colorThemes.grey,
                           },
                         ]}
                       >
-                        {images.length < 7
-                          ? "Add More Photos"
-                          : "Maximum Photos Added"}
+                        {images.length < 7 ? "Add More Photos" : "Maximum Photos Added"}
                       </Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.uploadButton, { backgroundColor: colorThemes.error, marginLeft: 8 }]}
-                    onPress={removeAllImages}
-                    disabled={images.length === 0}
-                  >
-                    <FontAwesome name="trash" size={20} color={colorThemes.textLight} />
-                    <Text style={[styles.uploadMoreText, { color: colorThemes.textLight }]}>Remove All</Text>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.uploadButton,
+                        { backgroundColor: colorThemes.error, borderColor: colorThemes.error },
+                        images.length === 0 && { opacity: 0.5 },
+                      ]}
+                      onPress={removeAllImages}
+                      disabled={images.length === 0}
+                    >
+                      <FontAwesome name="trash" size={20} color={colorThemes.textLight} />
+                      <Text style={[styles.uploadMoreText, { color: colorThemes.textLight }]}>Remove All</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </>
             )}
@@ -685,19 +679,22 @@ export default function SellCars() {
               <Animated.Image source={{ uri: selectedImage }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
             </View>
             {isProcessing && <ActivityIndicator size="large" color={colorThemes.primary} style={{ marginBottom: 12 }} />}
-            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', gap: 8 }}>
+              {/* Cancel */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.greyLight }]}
+                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.greyLight, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                 onPress={() => {
                   setImageModalVisible(false);
                   setSelectedImage(null);
                 }}
                 disabled={isProcessing}
               >
+                <FontAwesome name="times" size={18} color={colorThemes.textPrimary} style={{ marginRight: 6 }} />
                 <Text style={{ color: colorThemes.textPrimary, fontWeight: 'bold' }}>Cancel</Text>
               </TouchableOpacity>
+              {/* Crop */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.primary }]}
+                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.primary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                 onPress={async () => {
                   setIsProcessing(true);
                   setImageModalVisible(false);
@@ -707,10 +704,21 @@ export default function SellCars() {
                 }}
                 disabled={isProcessing}
               >
+                <FontAwesome name="crop" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
                 <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Crop</Text>
               </TouchableOpacity>
+              {/* Retake */}
               <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.accent2 }]}
+                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.accent2, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                onPress={pickImage}
+                disabled={isProcessing}
+              >
+                <FontAwesome name="refresh" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
+                <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Retake</Text>
+              </TouchableOpacity>
+              {/* Use Original */}
+              <TouchableOpacity
+                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.success || '#22c55e', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                 onPress={async () => {
                   setIsProcessing(true);
                   setImageModalVisible(false);
@@ -726,14 +734,8 @@ export default function SellCars() {
                 }}
                 disabled={isProcessing}
               >
+                <FontAwesome name="check" size={18} color={colorThemes.textLight} style={{ marginRight: 6 }} />
                 <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Use Original</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cropperFooterBtn, { backgroundColor: colorThemes.accent2, marginLeft: 8 }]}
-                onPress={pickImage}
-                disabled={isProcessing}
-              >
-                <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Retake</Text>
               </TouchableOpacity>
             </View>
           </View>
