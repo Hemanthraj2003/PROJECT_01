@@ -8,8 +8,10 @@ import {
   ScrollView,
   RefreshControl,
   Alert,
+  Animated,
+  Easing,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { SegmentedButtons } from "react-native-paper";
 import { useAuth } from "@/app/context/userContext";
 import { fetchCarsById, fetchUserById } from "../Services/backendoperations";
@@ -29,6 +31,8 @@ export default function MyCars() {
   const { showLoading, hideLoading } = useLoading();
   const { showNotification } = useNotification();
   const [refreshing, setRefreshing] = useState(false);
+  const [tabAnim] = useState(new Animated.Value(0));
+  const prevTab = useRef(value);
 
   // Add network status listener
   useEffect(() => {
@@ -60,7 +64,7 @@ export default function MyCars() {
     setError(null);
     try {
       showLoading();
-      const onSaleCars = await fetchCarsById(user?.onSaleCars);
+      const onSaleCars = await fetchCarsById(user?.onSaleCars ?? []);
       if (onSaleCars) {
         setOnSale(onSaleCars);
       } else {
@@ -68,7 +72,7 @@ export default function MyCars() {
         showNotification("Could not fetch cars on sale", "error");
       }
 
-      const boughtCars = await fetchCarsById(user?.boughtCars);
+      const boughtCars = await fetchCarsById(user?.boughtCars ?? []);
       if (boughtCars) {
         setBought(boughtCars);
       } else {
@@ -76,7 +80,7 @@ export default function MyCars() {
         showNotification("Could not fetch bought cars", "error");
       }
 
-      const soldCars = await fetchCarsById(user?.soldCars);
+      const soldCars = await fetchCarsById(user?.soldCars ?? []);
       if (soldCars) {
         setSold(soldCars);
       } else {
@@ -157,33 +161,104 @@ export default function MyCars() {
     initializeData();
   }, []);
 
+  // Animate tab transitions
+  useEffect(() => {
+    if (prevTab.current !== value) {
+      tabAnim.setValue(0);
+      Animated.timing(tabAnim, {
+        toValue: 1,
+        duration: 180, // faster
+        easing: Easing.out(Easing.cubic), // smoother
+        useNativeDriver: true,
+      }).start();
+      prevTab.current = value;
+    }
+  }, [value]);
+
   // Function to render list items
   const renderCarItem = ({ item }: { item: any }) => (
-    <View style={styles.carItemContainer}>
-      {/* Car Image */}
-      <Image
-        source={{
-          uri:
-            item.images?.[0] ||
-            "https://via.placeholder.com/70x70?text=No+Image",
+    <Animated.View
+      style={{
+        ...styles.carItemContainer,
+        // Fade and scale in effect
+        opacity: tabAnim,
+        transform: [
+          {
+            scale: tabAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.96, 1],
+            }),
+          },
+        ],
+      }}
+    >
+      {/* Car Image with shadow and slight border animation */}
+      <View
+        style={{
+          shadowColor: colorThemes.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 10,
+          elevation: 6,
+          borderRadius: 14,
+          backgroundColor: colorThemes.background,
+          marginRight: 12,
         }}
-        style={styles.carImage}
-        resizeMode="cover"
-      />
+      >
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              "https://via.placeholder.com/70x70?text=No+Image",
+          }}
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 14,
+            borderWidth: 2,
+            borderColor: colorThemes.primary,
+          }}
+          resizeMode="cover"
+        />
+      </View>
 
       {/* Car Details */}
       <View style={styles.carDetailsContainer}>
-        <Text style={styles.carTitle}>
+        <Text
+          style={{
+            ...styles.carTitle,
+            fontSize: typography.sizes.h3,
+            color: colorThemes.primary,
+            textShadowColor: colorThemes.primaryDark,
+            textShadowOffset: { width: 0, height: 2 },
+            textShadowRadius: 6,
+          }}
+        >
           {item.carBrand} {item.carModel}
         </Text>
 
-        <Text style={styles.carPrice}>₹{item.exceptedPrice}</Text>
+        <Text
+          style={{
+            ...styles.carPrice,
+            fontSize: typography.sizes.h2,
+            color: colorThemes.accent2,
+            fontWeight: "bold",
+            letterSpacing: 1,
+          }}
+        >
+          ₹{item.exceptedPrice}
+        </Text>
 
-        <Text style={styles.carInfo}>
+        <Text
+          style={{
+            ...styles.carInfo,
+            color: colorThemes.textSecondary,
+          }}
+        >
           {item.modelYear} • {item.km} km
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 
   const renderOnSaleCars = ({ item }: { item: any }) => (
@@ -239,46 +314,6 @@ export default function MyCars() {
 
   // UI sections for different categories
   const renderContent = () => {
-    if (error) {
-      return (
-        <ScrollView
-          contentContainerStyle={styles.emptyStateContainer}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colorThemes.primary, colorThemes.accent2]}
-              tintColor={colorThemes.primary}
-            />
-          }
-        >
-          <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.emptyStateSubtext}>Pull down to try again</Text>
-        </ScrollView>
-      );
-    }
-
-    if (isOffline) {
-      return (
-        <ScrollView
-          contentContainerStyle={styles.emptyStateContainer}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colorThemes.primary, colorThemes.accent2]}
-              tintColor={colorThemes.primary}
-            />
-          }
-        >
-          <Text style={styles.warningText}>You are currently offline</Text>
-          <Text style={styles.emptyStateSubtext}>
-            Pull down to refresh when back online
-          </Text>
-        </ScrollView>
-      );
-    }
-
     switch (value) {
       case "onSale":
         return onSale.length > 0 ? (
@@ -315,7 +350,6 @@ export default function MyCars() {
             <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
           </ScrollView>
         );
-
       case "bought":
         return bought.length > 0 ? (
           <FlatList
@@ -351,7 +385,6 @@ export default function MyCars() {
             <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
           </ScrollView>
         );
-
       case "sold":
         return sold.length > 0 ? (
           <FlatList
@@ -387,26 +420,75 @@ export default function MyCars() {
             <Text style={styles.emptyStateSubtext}>Pull down to refresh</Text>
           </ScrollView>
         );
-
       default:
-        return <Text>Select a category</Text>;
+        return null;
     }
   };
 
   return (
     <View style={styles.container}>
       {/* Segmented Buttons */}
-      <SegmentedButtons
-        value={value}
-        onValueChange={setValue}
-        buttons={[
-          { value: "onSale", label: "On Sale" },
-          { value: "bought", label: "Bought" },
-          { value: "sold", label: "Sold" },
-        ]}
-        style={styles.segmentedButtons}
-      />
-
+      <View style={styles.segmentedButtonsWrapper}>
+        <View style={styles.segmentedButtonsShadow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            <TouchableOpacity
+              style={[
+                styles.segmentedButton,
+                value === "onSale" && styles.segmentedButtonActive,
+              ]}
+              activeOpacity={0.85}
+              onPress={() => setValue("onSale")}
+            >
+              <Text
+                style={[
+                  styles.segmentedButtonText,
+                  value === "onSale" && styles.segmentedButtonTextActive,
+                ]}
+              >
+                On Sale
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.segmentedButton,
+                value === "bought" && styles.segmentedButtonActive,
+              ]}
+              activeOpacity={0.85}
+              onPress={() => setValue("bought")}
+            >
+              <Text
+                style={[
+                  styles.segmentedButtonText,
+                  value === "bought" && styles.segmentedButtonTextActive,
+                ]}
+              >
+                Bought
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.segmentedButton,
+                value === "sold" && styles.segmentedButtonActive,
+              ]}
+              activeOpacity={0.85}
+              onPress={() => setValue("sold")}
+            >
+              <Text
+                style={[
+                  styles.segmentedButtonText,
+                  value === "sold" && styles.segmentedButtonTextActive,
+                ]}
+              >
+                Sold
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
       {/* Content Rendering */}
       <View style={styles.contentContainer}>{renderContent()}</View>
     </View>
@@ -419,14 +501,54 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: colorThemes.backgroundLight,
   },
-  segmentedButtons: {
+  segmentedButtonsWrapper: {
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  segmentedButtonsShadow: {
     backgroundColor: colorThemes.background,
-    borderRadius: 8,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: colorThemes.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    marginHorizontal: 2,
+    padding: 2,
+  },
+  segmentedButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    marginHorizontal: 4,
+    backgroundColor: colorThemes.backgroundLight,
+    elevation: 0,
+    minWidth: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colorThemes.backgroundDark,
+    transitionDuration: "0.3s",
+  },
+  segmentedButtonActive: {
+    backgroundColor: colorThemes.primary,
+    borderColor: colorThemes.primary,
+    elevation: 2,
+    shadowColor: colorThemes.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  segmentedButtonText: {
+    fontFamily: typography.fonts.bodyBold,
+    fontSize: typography.sizes.body1,
+    color: colorThemes.textSecondary,
+    letterSpacing: 0.5,
+    transitionDuration: "0.3s",
+  },
+  segmentedButtonTextActive: {
+    color: colorThemes.textLight,
+    fontWeight: "bold",
   },
   contentContainer: {
     flex: 1,
@@ -434,16 +556,22 @@ const styles = StyleSheet.create({
   },
   carItemContainer: {
     backgroundColor: colorThemes.background,
-    marginVertical: 8,
-    padding: 14,
-    borderRadius: 12,
+    marginVertical: 12,
+    padding: 18,
+    borderRadius: 18,
     flexDirection: "row",
     alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+    shadowColor: colorThemes.primary,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    borderWidth: 1.5,
+    borderColor: colorThemes.primaryLight,
+    // Add gradient border effect (pseudo, for visual pop)
+    // borderImage: 'linear-gradient(90deg, #F83902, #FA8B20) 1',
+    backgroundClip: "padding-box",
+    overflow: "hidden",
   },
   onSaleItemContainer: {
     backgroundColor: colorThemes.background,
