@@ -135,6 +135,24 @@ jspm_packages/
 .firebase/
 firebase-debug.log
 firestore-debug.log
+*firebase-adminsdk*.json
+
+# Uploaded Images and Files
+SERVER/uploads/
+admin_pannel/public/uploads/
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+!assets/
+!public/next.svg
+!public/vercel.svg
+!public/file.svg
+!public/globe.svg
+!public/window.svg
 
 # Temporary files
 tmp/

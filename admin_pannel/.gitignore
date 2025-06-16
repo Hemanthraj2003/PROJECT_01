@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Firebase service account keys
+*firebase-adminsdk*.json
+
+# Uploaded files
+/public/uploads/
+/uploads/
+
 # vercel
 .vercel
 

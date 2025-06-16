@@ -116,6 +116,25 @@ After running the development setup:
    EXPO_PUBLIC_APP_NAME=Friends Cars
    ```
 
+### Admin Panel Setup
+
+**Firebase Configuration:**
+1. **Add Firebase Certificate:** Place your Firebase service account JSON file in both:
+   - `SERVER/carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json`
+   - `admin_pannel/carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json`
+
+2. **Benefits:**
+   - ✅ No environment variables needed - uses service account file directly
+   - ✅ More secure and simpler than environment variable approach
+   - ✅ Certificate files are excluded from git automatically
+
+**Optional Environment Setup:**
+Only needed if using additional services like SMS or NextAuth:
+   ```bash
+   cd admin_pannel
+   cp .env.example .env.local
+   ```
+
 ### Server Environment Setup
 
 1. Create a `.env` file in the SERVER directory:
