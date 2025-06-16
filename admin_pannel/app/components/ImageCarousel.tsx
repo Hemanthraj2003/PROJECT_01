@@ -1,19 +1,26 @@
 "use client";
 import React from "react";
 import dynamic from "next/dynamic";
+import type { SwiperProps } from "swiper/react";
 
-// Dynamically import Swiper to avoid SSR issues
-const Swiper = dynamic(() => import("swiper/react").then((mod) => mod.Swiper), {
-  ssr: false,
-});
-const SwiperSlide = dynamic(
-  () => import("swiper/react").then((mod) => mod.SwiperSlide),
-  {
-    ssr: false,
-  }
+// Dynamic imports with proper typing
+const Swiper = dynamic(
+  async () => {
+    const { Swiper } = await import("swiper/react");
+    return Swiper;
+  },
+  { ssr: false }
 );
 
-// Import modules dynamically
+const SwiperSlide = dynamic(
+  async () => {
+    const { SwiperSlide } = await import("swiper/react");
+    return SwiperSlide;
+  },
+  { ssr: false }
+);
+
+// Import required modules
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
