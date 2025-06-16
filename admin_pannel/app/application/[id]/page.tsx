@@ -11,12 +11,8 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
 import { useLoading } from "../../context/loadingContext";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+import ImageCarousel from "../../components/ImageCarousel";
 
 interface CarDetails {
   id: string;
@@ -208,25 +204,11 @@ export default function CarDetails() {
 
         {/* Image Carousel */}
         <div className="mb-8">
-          <Swiper
-            className="w-full max-w-2xl mx-auto"
-            slidesPerView={1}
-            navigation
-            modules={[Navigation, Pagination]}
-            pagination={{
-              clickable: true,
-            }}
-          >
-            {car.images?.map((image, index) => (
-              <SwiperSlide key={index}>
-                <img
-                  src={image}
-                  alt={`${car.carBrand} ${car.carModel}`}
-                  className="w-full h-[400px] object-cover rounded"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          <ImageCarousel
+            images={car.images || []}
+            carBrand={car.carBrand}
+            carModel={car.carModel}
+          />
         </div>
 
         {/* Car Information */}
