@@ -1,11 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { handleApiError, logApiRequest, getQueryParams, getRequestBody, parsePaginationParams, createPaginationResponse } from '@/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/firebase";
+import {
+  handleApiError,
+  logApiRequest,
+  getQueryParams,
+  getRequestBody,
+  parsePaginationParams,
+  createPaginationResponse,
+} from "@/lib/utils";
+
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
 
 // GET /api/cars - Get all cars with pagination
 export async function GET(request: NextRequest) {
-  logApiRequest(request, '/api/cars');
-  
+  logApiRequest(request, "/api/cars");
+
   try {
     const query = getQueryParams(request);
     const { page, limit, startAt } = parsePaginationParams(query);
@@ -24,10 +34,9 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (snapshot.empty) {
-      return NextResponse.json(
-        createPaginationResponse([], 0, page, limit),
-        { status: 200 }
-      );
+      return NextResponse.json(createPaginationResponse([], 0, page, limit), {
+        status: 200,
+      });
     }
 
     const cars = snapshot.docs.map((doc) => ({
@@ -46,16 +55,22 @@ export async function GET(request: NextRequest) {
 
 // POST /api/cars - Get filtered cars
 export async function POST(request: NextRequest) {
-  logApiRequest(request, '/api/cars (filtered)');
-  
+  logApiRequest(request, "/api/cars (filtered)");
+
   try {
     const query = getQueryParams(request);
     const body = await getRequestBody(request);
     const { page, limit, startAt } = parsePaginationParams(query);
     const searchTerm = query.searchTerm?.toLowerCase();
 
-    let carsQuery = db.collection("CARS");
-    const filters = [];
+    let carsQuery:
+      | FirebaseFirestore.Query
+      | FirebaseFirestore.CollectionReference = db.collection("CARS");
+    const filters: Array<{
+      field: string;
+      condition: FirebaseFirestore.WhereFilterOp;
+      value: any;
+    }> = [];
 
     // Combine all filters (from body and query params)
     if (body.filters && Array.isArray(body.filters)) {
@@ -104,7 +119,8 @@ export async function POST(request: NextRequest) {
       if (!filter.field || !filter.condition || filter.value === undefined) {
         return NextResponse.json(
           {
-            error: "Each filter should contain valid 'field', 'condition', and 'value'",
+            error:
+              "Each filter should contain valid 'field', 'condition', and 'value'",
           },
           { status: 400 }
         );

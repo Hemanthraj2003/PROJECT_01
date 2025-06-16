@@ -1,20 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 // Utility function to handle API errors consistently
-export function handleApiError(error: any, message: string = 'Internal server error') {
-  console.error('API Error:', error);
+export function handleApiError(
+  error: any,
+  message: string = "Internal server error"
+) {
+  console.error("API Error:", error);
   return NextResponse.json(
     {
       success: false,
       message,
-      error: error.message || 'Unknown error',
+      error: error.message || "Unknown error",
     },
     { status: 500 }
   );
 }
 
 // Utility function to validate required fields
-export function validateRequiredFields(data: any, requiredFields: string[]): string | null {
+export function validateRequiredFields(
+  data: any,
+  requiredFields: string[]
+): string | null {
   for (const field of requiredFields) {
     if (!data[field]) {
       return `${field} is required`;
@@ -29,19 +35,18 @@ export async function getRequestBody(request: NextRequest): Promise<any> {
     const body = await request.json();
     return body;
   } catch (error) {
-    throw new Error('Invalid JSON in request body');
+    throw new Error("Invalid JSON in request body");
   }
 }
 
 // Utility function to get query parameters
 export function getQueryParams(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
   const params: { [key: string]: string } = {};
-  
-  searchParams.forEach((value, key) => {
+
+  request.nextUrl.searchParams.forEach((value, key) => {
     params[key] = value;
   });
-  
+
   return params;
 }
 
@@ -50,14 +55,19 @@ export function parsePaginationParams(query: any) {
   const page = parseInt(query.page) || 1;
   const limit = parseInt(query.limit) || 10;
   const startAt = (page - 1) * limit;
-  
+
   return { page, limit, startAt };
 }
 
 // Utility function to create pagination response
-export function createPaginationResponse(data: any[], total: number, page: number, limit: number) {
+export function createPaginationResponse(
+  data: any[],
+  total: number,
+  page: number,
+  limit: number
+) {
   const totalPages = Math.ceil(total / limit);
-  
+
   return {
     success: true,
     data,
@@ -74,7 +84,9 @@ export function createPaginationResponse(data: any[], total: number, page: numbe
 // Utility function to log API requests (similar to the original logger middleware)
 export function logApiRequest(request: NextRequest, endpoint: string) {
   const currentDateTime = new Date().toISOString();
-  console.log(`${request.method} request made to: ${endpoint} at ${currentDateTime}`);
+  console.log(
+    `${request.method} request made to: ${endpoint} at ${currentDateTime}`
+  );
 }
 
 // Utility function to generate OTP
@@ -88,7 +100,7 @@ export async function sendSMS(phoneNumber: string, otp: number): Promise<any> {
     const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
       method: "POST",
       headers: {
-        authorization: process.env.FAST2SMS_API_KEY || '',
+        authorization: process.env.FAST2SMS_API_KEY || "",
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
@@ -97,7 +109,7 @@ export async function sendSMS(phoneNumber: string, otp: number): Promise<any> {
         numbers: phoneNumber,
       }),
     });
-    
+
     const data = await response.json();
     console.log("SMS API Response:", data);
     return data;
@@ -119,7 +131,7 @@ export async function isChatInitiated(db: any, carId: string, userId: string) {
     .where("carId", "==", carId)
     .where("userId", "==", userId)
     .get();
-    
+
   if (snapshot.empty) {
     return { isChat: false };
   }

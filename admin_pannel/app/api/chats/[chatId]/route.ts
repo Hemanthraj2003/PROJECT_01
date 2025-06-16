@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { handleApiError, logApiRequest, getRequestBody } from '@/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/firebase";
+import { handleApiError, logApiRequest, getRequestBody } from "@/lib/utils";
 
 // POST /api/chats/[chatId] - Get chat by ID
 export async function POST(
@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { chatId: string } }
 ) {
   logApiRequest(request, `/api/chats/${params.chatId}`);
-  
+
   try {
     const body = await getRequestBody(request);
     const { calledBy } = body;
@@ -17,7 +17,7 @@ export async function POST(
     if (!calledBy) {
       throw new Error("'calledBy' is required to get the chat.");
     }
-    
+
     const chatDoc = await db.collection("CHATS").doc(chatId).get();
     if (!chatDoc.exists) {
       return NextResponse.json(
@@ -49,7 +49,7 @@ export async function POST(
       {
         success: false,
         message: "Error fetching messages",
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

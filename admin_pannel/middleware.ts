@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
   // Check if user is authenticated
   if (!isAuthenticated) {
     // Redirect to login page if trying to access protected routes
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
   }
 
   return NextResponse.next();

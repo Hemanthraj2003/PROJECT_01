@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { handleApiError, logApiRequest, getQueryParams } from '@/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/firebase";
+import { handleApiError, logApiRequest, getQueryParams } from "@/lib/utils";
+
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
 
 // GET /api/users/isExists - Check if user exists by phone
 export async function GET(request: NextRequest) {
-  logApiRequest(request, '/api/users/isExists');
-  
+  logApiRequest(request, "/api/users/isExists");
+
   try {
     const query = getQueryParams(request);
     const { phone } = query;

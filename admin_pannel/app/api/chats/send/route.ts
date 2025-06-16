@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { handleApiError, logApiRequest, getRequestBody } from '@/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/firebase";
+import { handleApiError, logApiRequest, getRequestBody } from "@/lib/utils";
 
 // POST /api/chats/send - Send message to chat
 export async function POST(request: NextRequest) {
-  logApiRequest(request, '/api/chats/send');
-  
+  logApiRequest(request, "/api/chats/send");
+
   try {
     const body = await getRequestBody(request);
     const { chatId, messageData, userId } = body;
@@ -38,7 +38,11 @@ export async function POST(request: NextRequest) {
     // Verify that the user sending the message is the owner of the chat
     // This is a security check to prevent users from sending messages in other users' chats
     let shouldUpdateUserId = false;
-    if (userId && messageData.sentBy === "user" && chatData?.userId !== userId) {
+    if (
+      userId &&
+      messageData.sentBy === "user" &&
+      chatData?.userId !== userId
+    ) {
       console.log(
         `User ID mismatch: Request userId=${userId}, Chat userId=${chatData?.userId}`
       );
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest) {
       shouldUpdateUserId = true;
     }
 
-    let updatedChatData = {
+    let updatedChatData: any = {
       ...chatData,
       messages: [messageData, ...(chatData?.messages || [])],
       lastMessageAt: messageData.timeStamp,
@@ -72,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     await chatRef.update(updatedChatData);
-    
+
     return NextResponse.json(
       {
         success: true,
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         message: "Error sending messages",
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 400 }
     );
