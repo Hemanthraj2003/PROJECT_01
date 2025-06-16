@@ -24,8 +24,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import colorThemes, { typography } from "@/app/theme";
 import { Picker } from "@react-native-picker/picker";
 import NetInfo from "@react-native-community/netinfo";
-// @ts-ignore
-import ImageCropper from 'expo-image-cropper';
 
 // Car brands list
 const carBrands = [
@@ -77,7 +75,11 @@ const CustomAlert = ({
   visible: boolean;
   title: string;
   message: string;
-  buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[];
+  buttons: {
+    text: string;
+    onPress?: () => void;
+    style?: "default" | "cancel" | "destructive";
+  }[];
   onClose: () => void;
 }) => {
   return (
@@ -97,8 +99,9 @@ const CustomAlert = ({
                 key={index}
                 style={[
                   styles.alertButton,
-                  button.style === 'destructive' && styles.alertButtonDestructive,
-                  button.style === 'cancel' && styles.alertButtonCancel,
+                  button.style === "destructive" &&
+                    styles.alertButtonDestructive,
+                  button.style === "cancel" && styles.alertButtonCancel,
                 ]}
                 onPress={() => {
                   button.onPress?.();
@@ -109,8 +112,9 @@ const CustomAlert = ({
                 <Text
                   style={[
                     styles.alertButtonText,
-                    button.style === 'destructive' && styles.alertButtonTextDestructive,
-                    button.style === 'cancel' && styles.alertButtonTextCancel,
+                    button.style === "destructive" &&
+                      styles.alertButtonTextDestructive,
+                    button.style === "cancel" && styles.alertButtonTextCancel,
                   ]}
                 >
                   {button.text}
@@ -145,12 +149,6 @@ export default function SellCars() {
 
   const [images, setImages] = useState<string[]>([]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const [cropping, setCropping] = useState(false);
-  const [cropUri, setCropUri] = useState<string | null>(null);
-  const cropperRef = useRef<any>(null);
-
-  const [imageModalVisible, setImageModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Custom Alert State
@@ -158,17 +156,25 @@ export default function SellCars() {
   const [alertConfig, setAlertConfig] = useState<{
     title: string;
     message: string;
-    buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[];
+    buttons: {
+      text: string;
+      onPress?: () => void;
+      style?: "default" | "cancel" | "destructive";
+    }[];
   }>({
-    title: '',
-    message: '',
+    title: "",
+    message: "",
     buttons: [],
   });
 
   const showCustomAlert = (
     title: string,
     message: string,
-    buttons: { text: string; onPress?: () => void; style?: 'default' | 'cancel' | 'destructive' }[]
+    buttons: {
+      text: string;
+      onPress?: () => void;
+      style?: "default" | "cancel" | "destructive";
+    }[]
   ) => {
     setAlertConfig({ title, message, buttons });
     setAlertVisible(true);
@@ -176,7 +182,7 @@ export default function SellCars() {
 
   const hideCustomAlert = () => {
     setAlertVisible(false);
-    setAlertConfig({ title: '', message: '', buttons: [] });
+    setAlertConfig({ title: "", message: "", buttons: [] });
   };
 
   useEffect(() => {
@@ -198,14 +204,16 @@ export default function SellCars() {
   const pickImage = async () => {
     if (images.length >= 7) {
       showCustomAlert(
-        "Too Many Images",
-        "You can only upload up to 7 images.",
+        "Maximum Images Reached",
+        "You can upload a maximum of 7 images.",
         [{ text: "OK", onPress: () => {} }]
       );
       return;
     }
+
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         showCustomAlert(
           "Permission Required",
@@ -214,34 +222,30 @@ export default function SellCars() {
         );
         return;
       }
+
+      setIsProcessing(true);
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
+        mediaTypes: ["images"],
+        allowsEditing: true, // Enable built-in cropping
+        quality: 0.5, // Lower quality for smaller file sizes
       });
+
       if (result && !result.canceled && result.assets?.length > 0) {
-        setSelectedImage(result.assets[0].uri);
-        setImageModalVisible(true);
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 600 } }], // Smaller size
+          { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        setImages((prev) => [...prev, compressedImage.uri]);
       }
     } catch (error) {
       console.error("Error picking image:", error);
-      showCustomAlert(
-        "Error",
-        "Failed to pick image. Please try again.",
-        [{ text: "OK", onPress: () => {} }]
-      );
+      showCustomAlert("Error", "Failed to pick image. Please try again.", [
+        { text: "OK", onPress: () => {} },
+      ]);
+    } finally {
+      setIsProcessing(false);
     }
-  };
-
-  const removeAllImages = () => {
-    showCustomAlert(
-      "Remove All Images",
-      "Are you sure you want to remove all uploaded images?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Remove All", style: "destructive", onPress: () => setImages([]) },
-      ]
-    );
   };
 
   const clearData = () => {
@@ -430,45 +434,35 @@ export default function SellCars() {
                 <View style={styles.carouselContainer}>
                   <DeleteableCarousol images={images} setImages={setImages} />
                 </View>
-                <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 8 }}>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <TouchableOpacity
-                      style={[styles.uploadButton, images.length >= 7 && styles.disabledUploadButton]}
-                      onPress={pickImage}
-                      disabled={images.length >= 7}
-                    >
-                      <FontAwesome
-                        name="cloud-upload"
-                        size={20}
-                        color={images.length < 7 ? colorThemes.primary : colorThemes.grey}
-                      />
-                      <Text
-                        style={[
-                          styles.uploadMoreText,
-                          {
-                            color: images.length < 7 ? colorThemes.primary : colorThemes.grey,
-                          },
-                        ]}
-                      >
-                        {images.length < 7 ? "Add More Photos" : "Maximum Photos Added"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 8 }}>
-                    <TouchableOpacity
-                      style={[
-                        styles.uploadButton,
-                        { backgroundColor: colorThemes.error, borderColor: colorThemes.error },
-                        images.length === 0 && { opacity: 0.5 },
-                      ]}
-                      onPress={removeAllImages}
-                      disabled={images.length === 0}
-                    >
-                      <FontAwesome name="trash" size={20} color={colorThemes.textLight} />
-                      <Text style={[styles.uploadMoreText, { color: colorThemes.textLight }]}>Remove All</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.uploadButton,
+                    images.length >= 7 && styles.disabledUploadButton,
+                  ]}
+                  onPress={pickImage}
+                  disabled={images.length >= 7}
+                >
+                  <FontAwesome
+                    name="camera"
+                    size={20}
+                    color={
+                      images.length < 7 ? colorThemes.primary : colorThemes.grey
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.uploadMoreText,
+                      {
+                        color:
+                          images.length < 7
+                            ? colorThemes.primary
+                            : colorThemes.grey,
+                      },
+                    ]}
+                  >
+                    {images.length < 7 ? "Add Photo" : "Maximum Photos Added"}
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
@@ -679,7 +673,12 @@ export default function SellCars() {
           />
         </View>
 
-        <Animated.View style={[styles.submitButtonContainer, { transform: [{ scale: scaleAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.submitButtonContainer,
+            { transform: [{ scale: scaleAnim }] },
+          ]}
+        >
           <TouchableOpacity
             activeOpacity={0.85}
             onPressIn={isFormValid() ? handlePressIn : undefined}
@@ -693,15 +692,24 @@ export default function SellCars() {
               </View>
             ) : (
               <LinearGradient
-                colors={[colorThemes.primary, colorThemes.accent2, colorThemes.primary]}
+                colors={[
+                  colorThemes.primary,
+                  colorThemes.accent2,
+                  colorThemes.primary,
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.submitButton}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color={colorThemes.textLight} />
+                  <ActivityIndicator
+                    size="small"
+                    color={colorThemes.textLight}
+                  />
                 ) : (
-                  <Text style={styles.submitButtonText}>Submit For Approval</Text>
+                  <Text style={styles.submitButtonText}>
+                    Submit For Approval
+                  </Text>
                 )}
               </LinearGradient>
             )}
@@ -711,9 +719,16 @@ export default function SellCars() {
       {showSuccess && (
         <View style={styles.successOverlay}>
           <View style={styles.successCard}>
-            <FontAwesome name="check-circle" size={72} color={colorThemes.success || '#22c55e'} style={{ marginBottom: 18 }} />
+            <FontAwesome
+              name="check-circle"
+              size={72}
+              color={colorThemes.success || "#22c55e"}
+              style={{ marginBottom: 18 }}
+            />
             <Text style={styles.successTitle}>Success!</Text>
-            <Text style={styles.successSubtitle}>Your car listing has been submitted for approval.</Text>
+            <Text style={styles.successSubtitle}>
+              Your car listing has been submitted for approval.
+            </Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={() => setShowSuccess(false)}
@@ -731,133 +746,16 @@ export default function SellCars() {
           </View>
         </View>
       )}
-      {imageModalVisible && selectedImage && (
+      {isProcessing && (
         <View style={styles.cropperOverlay}>
           <View style={styles.cropperModal}>
-            <Text style={styles.modalTitle}>Preview Image</Text>
-            <View style={styles.imagePreview}>
-              <Animated.Image source={{ uri: selectedImage }} style={styles.previewImage} resizeMode="cover" />
-            </View>
-            {isProcessing && <ActivityIndicator size="large" color={colorThemes.primary} style={styles.processingIndicator} />}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.cropperFooterBtn, styles.retakeBtn]}
-                onPress={pickImage}
-                disabled={isProcessing}
-              >
-                <FontAwesome name="refresh" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Retake</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cropperFooterBtn, styles.cropBtn]}
-                onPress={async () => {
-                  setIsProcessing(true);
-                  setImageModalVisible(false);
-                  setCropping(true);
-                  setCropUri(selectedImage);
-                  setIsProcessing(false);
-                }}
-                disabled={isProcessing}
-              >
-                <FontAwesome name="crop" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Crop</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cropperFooterBtn, styles.cancelBtn]}
-                onPress={() => {
-                  setImageModalVisible(false);
-                  setSelectedImage(null);
-                }}
-                disabled={isProcessing}
-              >
-                <FontAwesome name="times" size={18} color={colorThemes.textPrimary} style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, { color: colorThemes.textPrimary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cropperFooterBtn, styles.useOriginalBtn]}
-                onPress={async () => {
-                  setIsProcessing(true);
-                  setImageModalVisible(false);
-                  const compressedImage = await ImageManipulator.manipulateAsync(
-                    selectedImage!,
-                    [{ resize: { width: 800 } }],
-                    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-                  );
-                  setImages((prev) => [...prev, compressedImage.uri]);
-                  setSelectedImage(null);
-                  setIsProcessing(false);
-                }}
-                disabled={isProcessing}
-              >
-                <FontAwesome name="check" size={18} color={colorThemes.textLight} style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Use Original</Text>
-              </TouchableOpacity>
-            </View>
+            <ActivityIndicator
+              size="large"
+              color={colorThemes.primary}
+              style={styles.processingIndicator}
+            />
+            <Text style={styles.modalTitle}>Processing Image...</Text>
           </View>
-        </View>
-      )}
-      {cropping && cropUri && (
-        <View style={styles.cropperOverlay} key={cropUri}>
-          <ImageCropper
-            imageUri={cropUri}
-            onCancel={() => {
-              setCropping(false);
-              setCropUri(null);
-              setTimeout(() => {
-                setCropping(false);
-                setCropUri(null);
-              }, 300);
-            }}
-            onDone={async (croppedUri: string) => {
-              setIsProcessing(true);
-              setCropping(false);
-              setCropUri(null);
-              setTimeout(() => {
-                setCropping(false);
-                setCropUri(null);
-              }, 300);
-              try {
-                const compressedImage = await ImageManipulator.manipulateAsync(
-                  croppedUri,
-                  [{ resize: { width: 800 } }],
-                  { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-                );
-                setImages((prev) => [...prev, compressedImage.uri]);
-              } catch (e) {
-                showCustomAlert(
-                  'Error',
-                  'Failed to process cropped image.',
-                  [{ text: "OK", onPress: () => {} }]
-                );
-              }
-              setIsProcessing(false);
-            }}
-            mode="rectangle"
-            lockAspectRatio={false}
-            renderFooter={({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) => (
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 }}>
-                <TouchableOpacity
-                  style={{ flex: 1, marginRight: 8, backgroundColor: colorThemes.greyLight, borderRadius: 10, padding: 12, alignItems: 'center' }}
-                  onPress={() => {
-                    setCropping(false);
-                    setCropUri(null);
-                    setTimeout(() => {
-                      setCropping(false);
-                      setCropUri(null);
-                    }, 300);
-                  }}
-                >
-                  <Text style={{ color: colorThemes.textPrimary, fontWeight: 'bold' }}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{ flex: 1, marginHorizontal: 8, backgroundColor: colorThemes.primary, borderRadius: 10, padding: 12, alignItems: 'center' }}
-                  onPress={onDone}
-                >
-                  <Text style={{ color: colorThemes.textLight, fontWeight: 'bold' }}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
         </View>
       )}
       <CustomAlert
@@ -946,7 +844,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   formColumn: {
-    width: "48%",
+    width: "45%",
   },
   imagePickerContainer: {
     alignItems: "center",
@@ -1085,9 +983,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colorThemes.greyLight,
     borderRadius: 18,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 0,
-    shadowColor: 'transparent',
+    shadowColor: "transparent",
   },
   errorText: {
     fontFamily: typography.fonts.body,
@@ -1107,23 +1005,23 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   successOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0,0,0,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 100,
   },
   successCard: {
-    width: '85%',
-    backgroundColor: '#fff',
+    width: "85%",
+    backgroundColor: "#fff",
     borderRadius: 28,
     paddingVertical: 36,
     paddingHorizontal: 24,
-    alignItems: 'center',
+    alignItems: "center",
     shadowColor: colorThemes.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
@@ -1133,8 +1031,8 @@ const styles = StyleSheet.create({
   successTitle: {
     fontFamily: typography.fonts.heading,
     fontSize: 32,
-    color: colorThemes.success || '#22c55e',
-    fontWeight: 'bold',
+    color: colorThemes.success || "#22c55e",
+    fontWeight: "bold",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
@@ -1142,18 +1040,18 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.body,
     fontSize: 18,
     color: colorThemes.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 28,
     lineHeight: 26,
   },
   successButton: {
-    width: '100%',
+    width: "100%",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   successButtonGradient: {
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 16,
   },
   successButtonText: {
@@ -1163,28 +1061,28 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   cropperOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.18)',
+    backgroundColor: "rgba(0,0,0,0.18)",
     zIndex: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cropperModal: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 18,
     padding: 18,
-    width: '90%',
-    alignItems: 'center',
+    width: "90%",
+    alignItems: "center",
     elevation: 8,
   },
   modalTitle: {
     fontFamily: typography.fonts.heading,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colorThemes.textPrimary,
     marginBottom: 10,
   },
@@ -1192,22 +1090,22 @@ const styles = StyleSheet.create({
     width: 240,
     height: 180,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 16,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
   previewImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   processingIndicator: {
     marginBottom: 12,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    width: "100%",
     gap: 10,
   },
   cropperFooterBtn: {
@@ -1215,11 +1113,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
     elevation: 2,
-    minWidth: '45%',
+    minWidth: "45%",
   },
   buttonIcon: {
     marginRight: 6,
@@ -1227,7 +1125,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: typography.fonts.bodyBold,
     fontSize: typography.sizes.body2,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: colorThemes.textLight,
   },
   cancelBtn: {
@@ -1240,27 +1138,27 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.accent2,
   },
   useOriginalBtn: {
-    backgroundColor: colorThemes.success || '#22c55e',
+    backgroundColor: colorThemes.success || "#22c55e",
   },
   // Custom Alert Styles
   alertOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0,0,0,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 300,
   },
   alertCard: {
-    width: '85%',
-    backgroundColor: '#fff',
+    width: "85%",
+    backgroundColor: "#fff",
     borderRadius: 18,
     paddingVertical: 24,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: "center",
     shadowColor: colorThemes.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
@@ -1271,22 +1169,22 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.heading,
     fontSize: typography.sizes.h3,
     color: colorThemes.textPrimary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   alertMessage: {
     fontFamily: typography.fonts.body,
     fontSize: typography.sizes.body1,
     color: colorThemes.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
     lineHeight: 22,
   },
   alertButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
     gap: 10,
   },
   alertButton: {
@@ -1294,8 +1192,8 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.primary,
     borderRadius: 12,
     paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   alertButtonCancel: {
     backgroundColor: colorThemes.greyLight,
@@ -1307,7 +1205,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fonts.bodyBold,
     fontSize: typography.sizes.body1,
     color: colorThemes.textLight,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   alertButtonTextCancel: {
     color: colorThemes.textPrimary,

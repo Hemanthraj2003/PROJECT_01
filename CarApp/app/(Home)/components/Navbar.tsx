@@ -96,7 +96,10 @@ const Navbar = () => {
   return (
     <View>
       <LinearGradient
-        colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
+        colors={[
+          colorThemes.primary || "#FF6200",
+          colorThemes.accent2 || "#FFD700",
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={style.navbar}
@@ -159,13 +162,20 @@ const Navbar = () => {
             <View style={style.modalHeader}>
               <Text style={style.title}>Profile</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
-                <AntDesign name="close" size={24} color={colorThemes.grey || "#A9A9A9"} />
+                <AntDesign
+                  name="close"
+                  size={24}
+                  color={colorThemes.grey || "#A9A9A9"}
+                />
               </TouchableOpacity>
             </View>
 
             {loading ? (
               <View style={style.loadingContainer}>
-                <ActivityIndicator size="large" color={colorThemes.primary || "#FF6200"} />
+                <ActivityIndicator
+                  size="large"
+                  color={colorThemes.primary || "#FF6200"}
+                />
               </View>
             ) : (
               <ScrollView
@@ -176,7 +186,10 @@ const Navbar = () => {
                 <View style={style.profileContainer}>
                   <View style={style.avatarContainer}>
                     <LinearGradient
-                      colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
+                      colors={[
+                        colorThemes.primary || "#FF6200",
+                        colorThemes.accent2 || "#FFD700",
+                      ]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={style.avatar}
@@ -259,7 +272,10 @@ const Navbar = () => {
 
             <TouchableOpacity onPress={handleLogout}>
               <LinearGradient
-                colors={[colorThemes.primary || "#FF6200", colorThemes.accent2 || "#FFD700"]}
+                colors={[
+                  colorThemes.primary || "#FF6200",
+                  colorThemes.accent2 || "#FFD700",
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={style.logoutButton}
@@ -519,7 +535,6 @@ const style = StyleSheet.create({
     gap: 15,
   },
   cancelButton: {
-    flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
@@ -527,7 +542,6 @@ const style = StyleSheet.create({
     backgroundColor: "#A9A9A9",
   },
   confirmButton: {
-    flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,

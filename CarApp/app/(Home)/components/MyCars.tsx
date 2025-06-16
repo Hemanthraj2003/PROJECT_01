@@ -312,6 +312,56 @@ export default function MyCars() {
     </TouchableOpacity>
   );
 
+  const renderSoldCars = ({ item }: { item: any }) => (
+    <TouchableOpacity style={styles.onSaleItemContainer}>
+      <View style={styles.onSaleItemContent}>
+        {/* Car Image */}
+        <Image
+          source={{
+            uri:
+              item.images?.[0] ||
+              "https://www.godigit.com/content/dam/godigit/directportal/en/tata-safari-adventure-brand.jpg",
+          }}
+          style={styles.carImage}
+          resizeMode="cover"
+        />
+
+        {/* Car Details */}
+        <View style={styles.carDetailsContainer}>
+          <Text style={styles.carTitle}>
+            {item.carBrand} {item.carModel}
+          </Text>
+
+          <Text style={styles.carPrice}>₹{item.exceptedPrice}</Text>
+
+          <Text style={styles.carInfo}>
+            {item.modelYear} • {item.km} km
+          </Text>
+        </View>
+
+        {/* Sold Status */}
+        <View style={styles.statusContainer}>
+          <Text
+            style={[
+              styles.statusText,
+              {
+                color: colorThemes.success,
+                backgroundColor: colorThemes.success + "20",
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: "bold",
+              },
+            ]}
+          >
+            SOLD
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   // UI sections for different categories
   const renderContent = () => {
     switch (value) {
@@ -389,7 +439,7 @@ export default function MyCars() {
         return sold.length > 0 ? (
           <FlatList
             data={sold}
-            renderItem={renderCarItem}
+            renderItem={renderSoldCars}
             keyExtractor={(item) => item.id}
             refreshControl={
               <RefreshControl
@@ -430,11 +480,7 @@ export default function MyCars() {
       {/* Segmented Buttons */}
       <View style={styles.segmentedButtonsWrapper}>
         <View style={styles.segmentedButtonsShadow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ flexGrow: 1 }}
-          >
+          <View style={styles.segmentedButtonsContainer}>
             <TouchableOpacity
               style={[
                 styles.segmentedButton,
@@ -486,7 +532,7 @@ export default function MyCars() {
                 Sold
               </Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
       </View>
       {/* Content Rendering */}
@@ -502,7 +548,7 @@ const styles = StyleSheet.create({
     backgroundColor: colorThemes.backgroundLight,
   },
   segmentedButtonsWrapper: {
-    marginBottom: 16,
+    marginBottom: 8,
     marginTop: 4,
   },
   segmentedButtonsShadow: {
@@ -516,14 +562,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
     padding: 2,
   },
+  segmentedButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 3,
+  },
   segmentedButton: {
+    flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 28,
+    paddingHorizontal: 8,
     borderRadius: 12,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
     backgroundColor: colorThemes.backgroundLight,
     elevation: 0,
-    minWidth: 90,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -541,9 +593,9 @@ const styles = StyleSheet.create({
   },
   segmentedButtonText: {
     fontFamily: typography.fonts.bodyBold,
-    fontSize: typography.sizes.body1,
+    fontSize: typography.sizes.body2,
     color: colorThemes.textSecondary,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     transitionDuration: "0.3s",
   },
   segmentedButtonTextActive: {
@@ -552,7 +604,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 8,
   },
   carItemContainer: {
     backgroundColor: colorThemes.background,

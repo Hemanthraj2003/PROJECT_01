@@ -5,11 +5,8 @@ import path from "path";
 if (!admin.apps.length) {
   try {
     // Use the Firebase service account key file directly
-    const serviceAccountPath = path.join(
-      process.cwd(),
-      "carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json"
-    );
-    const serviceAccount = require(serviceAccountPath);
+
+    const serviceAccount = require("../carshu-1e768-firebase-adminsdk-fbsvc-3503135aec.json");
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
