@@ -10,7 +10,7 @@ const nextConfig = {
     unoptimized: true,
   },
   // Disable static 404/500 pages generation
-  output: 'standalone',
+  output: "standalone",
 };
 
 module.exports = nextConfig;

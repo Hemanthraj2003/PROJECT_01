@@ -1,22 +1,24 @@
-'use client';
+"use client";
 
-import { Box, Container, Typography, Button } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { Box, Container, Typography, Button } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 export default function NotFound() {
   const router = useRouter();
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        textAlign: 'center',
-        gap: 2
-      }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          textAlign: "center",
+          gap: 2,
+        }}
+      >
         <Typography variant="h4" component="h1" gutterBottom>
           404 - Page Not Found
         </Typography>
@@ -25,7 +27,7 @@ export default function NotFound() {
         </Typography>
         <Button
           variant="contained"
-          onClick={() => router.push('/')}
+          onClick={() => router.push("/")}
           sx={{ mt: 2 }}
         >
           Go to Dashboard
