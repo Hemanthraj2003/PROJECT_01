@@ -95,7 +95,7 @@ export const typography = {
   },
 };
 
-const PRODAPI = "http://192.168.0.105:3000/api";
+const PRODAPI = "http://carsapp-in.netlify.app/api";
 const DEVAPI = "http://192.168.0.106:5000";
 export default colorThemes;
 
