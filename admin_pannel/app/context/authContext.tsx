@@ -9,7 +9,11 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  login: async () => false,
+  logout: () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,27 +27,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else if (window.location.pathname !== "/login") {
       router.push("/login");
     }
-  }, []);
+  }, [router]);
 
   const login = async (
     username: string,
     password: string
   ): Promise<boolean> => {
-    // For demo purposes, we'll use hardcoded credentials
-    // In production, this should make an API call to validate credentials
-    if (username === "admin" && password === "admin123") {
-      // Set cookie with 1 day expiration
-      Cookies.set("adminAuthToken", "demo-token", { expires: 1 });
-      setIsAuthenticated(true);
-      return true;
+    try {
+      // For demo purposes, we'll use hardcoded credentials
+      // In production, this should make an API call to validate credentials
+      if (username === "admin" && password === "admin123") {
+        // Set cookie with 1 day expiration
+        Cookies.set("adminAuthToken", "demo-token", { expires: 1 });
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
-    Cookies.remove("adminAuthToken");
-    setIsAuthenticated(false);
-    router.push("/login");
+    try {
+      Cookies.remove("adminAuthToken");
+      setIsAuthenticated(false);
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (

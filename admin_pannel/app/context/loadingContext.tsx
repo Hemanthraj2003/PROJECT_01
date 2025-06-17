@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import LoadingOverlay from "../components/LoadingOverlay";
 
 interface LoadingContextType {
@@ -8,7 +8,10 @@ interface LoadingContextType {
   hideLoading: () => void;
 }
 
-const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
+const LoadingContext = createContext<LoadingContextType>({
+  showLoading: () => {},
+  hideLoading: () => {},
+});
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
