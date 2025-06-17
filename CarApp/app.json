@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "assets/images/splashscreen.png",
+        "foregroundImage": "./assets/images/splashscreen.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.rougecipher.CarApp"
