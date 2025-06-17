@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
 import dynamic from "next/dynamic";
-import type { SwiperProps } from 'swiper/react';
+import type { SwiperProps } from "swiper/react";
 
 // Dynamic imports with proper typing
 const Swiper = dynamic(
   async () => {
-    const { Swiper } = await import('swiper/react');
+    const { Swiper } = await import("swiper/react");
     return Swiper;
   },
   { ssr: false }
@@ -14,7 +14,7 @@ const Swiper = dynamic(
 
 const SwiperSlide = dynamic(
   async () => {
-    const { SwiperSlide } = await import('swiper/react');
+    const { SwiperSlide } = await import("swiper/react");
     return SwiperSlide;
   },
   { ssr: false }
