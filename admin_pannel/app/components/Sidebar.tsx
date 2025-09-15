@@ -10,7 +10,6 @@ import {
   Box,
   Typography,
   Divider,
-  Avatar,
   Badge,
 } from "@mui/material";
 import {
@@ -19,7 +18,6 @@ import {
   Person as PersonIcon,
   Forum as ForumIcon,
   Logout as LogoutIcon,
-  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/authContext";
@@ -45,7 +43,6 @@ export default function Sidebar() {
       icon: <ForumIcon />,
       badge: unreadCount > 0 ? unreadCount : null,
     },
-    { text: "Settings", path: "/settings", icon: <SettingsIcon /> },
   ];
 
   // Fetch unread count
@@ -121,21 +118,8 @@ export default function Sidebar() {
         <Box
           sx={{ p: 3, textAlign: "center", borderBottom: "1px solid #334155" }}
         >
-          <Avatar
-            sx={{
-              width: 60,
-              height: 60,
-              bgcolor: "#3b82f6",
-              mx: "auto",
-              mb: 2,
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-            }}
-          >
-            A
-          </Avatar>
           <Typography variant="h6" sx={{ fontWeight: "bold", mb: 0.5 }}>
-            Cars Hub Admin
+            Friends Cars
           </Typography>
           <Typography
             variant="body2"
