@@ -68,7 +68,10 @@ async function getUserInfo(userId: string) {
     return userInfo;
   } catch (error) {
     console.error(`Error fetching user ${userId}:`, error);
-    return null;
+    // Cache a default value to prevent repeated API calls
+    const defaultUserInfo = { name: "Unknown User", phone: "No Phone" };
+    userCache.set(userId, defaultUserInfo);
+    return defaultUserInfo;
   }
 }
 
@@ -131,8 +134,11 @@ export const chatService = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chatId,
-            message,
-            sentBy: "admin",
+            messageData: {
+              message: message.trim(),
+              sentBy: "admin",
+              timeStamp: new Date().toISOString(),
+            },
           }),
           cache: "no-store",
         }

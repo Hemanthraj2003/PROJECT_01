@@ -23,6 +23,7 @@ import {
   Phone as PhoneIcon,
   DirectionsCar as CarIcon,
   AccessTime as TimeIcon,
+  Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { useLoading } from "../context/loadingContext";
 import {
@@ -53,6 +54,17 @@ export default function ModernChats() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Function to notify sidebar of read status changes
+  const notifySidebarUpdate = () => {
+    // Dispatch custom event to trigger sidebar refresh
+    window.dispatchEvent(new CustomEvent("chatReadStatusChanged"));
+  };
+
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    fetchChats(true);
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [selectedChat?.messages]);
@@ -61,13 +73,10 @@ export default function ModernChats() {
   useEffect(() => {
     fetchChats();
 
-    // Auto-refresh chats every 30 seconds to update read status
-    const interval = setInterval(() => fetchChats(true), 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Fetch car details when chat is selected and scroll to bottom
+    // Remove auto-refresh polling, only keep read status event updates
+    // const interval = setInterval(() => fetchChats(true), 10000);
+    // return () => clearInterval(interval);
+  }, []); // Fetch car details when chat is selected and scroll to bottom
   useEffect(() => {
     if (selectedChat) {
       fetchCarDetails(selectedChat.carId);
@@ -87,13 +96,18 @@ export default function ModernChats() {
       const response = await chatService.getAllChats(1, 100);
       setChats(response.data);
 
-      // Update selected chat if it exists in the new data
+      // Update selected chat if it exists in the new data - preserve scroll position
       if (selectedChat) {
         const updatedSelectedChat = response.data.find(
           (chat) => chat.id === selectedChat.id
         );
         if (updatedSelectedChat) {
-          setSelectedChat(updatedSelectedChat);
+          // Only update if there are actual changes to prevent unnecessary re-renders
+          if (
+            JSON.stringify(updatedSelectedChat) !== JSON.stringify(selectedChat)
+          ) {
+            setSelectedChat(updatedSelectedChat);
+          }
         }
       }
 
@@ -121,11 +135,11 @@ export default function ModernChats() {
     }
   };
 
-  const handleChatSelect = (chat: Chat) => {
+  const handleChatSelect = async (chat: Chat) => {
     setSelectedChat(chat);
-    // Mark as read
+    // Mark as read immediately with API call
     if (!chat.readByAdmin) {
-      markAsRead(chat.id);
+      await markAsRead(chat.id);
     }
   };
 
@@ -144,21 +158,58 @@ export default function ModernChats() {
         );
       }
 
-      // Call API to mark as read - implement proper API endpoint
+      // Immediately notify sidebar of the change
+      notifySidebarUpdate();
+
+      // Call dedicated API endpoint to mark as read
       try {
-        await chatService.getChatById(chatId); // This triggers the read status update on backend
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API + `/chats/${chatId}/mark-read`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              readByAdmin: true,
+              calledBy: "admin",
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to mark as read");
+        }
+
+        // Refresh chats to get updated status from server
+        setTimeout(() => {
+          fetchChats(true);
+          notifySidebarUpdate(); // Notify sidebar to refresh badge
+        }, 1000);
       } catch (apiError) {
         console.error("Error marking chat as read via API:", apiError);
-        // Revert local state if API call fails
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.id === chatId ? { ...chat, readByAdmin: false } : chat
-          )
-        );
-        if (selectedChat?.id === chatId) {
-          setSelectedChat((prev) =>
-            prev ? { ...prev, readByAdmin: false } : null
+
+        // Fallback: try using the existing getChatById method
+        try {
+          await chatService.getChatById(chatId);
+          // Refresh chats after fallback
+          setTimeout(() => {
+            fetchChats(true);
+            notifySidebarUpdate(); // Notify sidebar to refresh badge
+          }, 1000);
+        } catch (fallbackError) {
+          console.error("Fallback API call also failed:", fallbackError);
+          // Revert local state if both API calls fail
+          setChats((prev) =>
+            prev.map((chat) =>
+              chat.id === chatId ? { ...chat, readByAdmin: false } : chat
+            )
           );
+          if (selectedChat?.id === chatId) {
+            setSelectedChat((prev) =>
+              prev ? { ...prev, readByAdmin: false } : null
+            );
+          }
         }
       }
     } catch (error) {
@@ -169,16 +220,18 @@ export default function ModernChats() {
   const sendMessage = async () => {
     if (!message.trim() || !selectedChat) return;
 
+    const messageToSend = message.trim();
+
     try {
       showLoading("Sending message...");
 
       const newMessage: ChatMessage = {
         sentBy: "admin",
-        message: message.trim(),
+        message: messageToSend,
         timeStamp: new Date().toISOString(),
       };
 
-      // Update local state immediately
+      // Update local state immediately for better UX
       const updatedChat = {
         ...selectedChat,
         messages: [...selectedChat.messages, newMessage],
@@ -195,10 +248,25 @@ export default function ModernChats() {
       // Scroll to bottom after sending message
       setTimeout(scrollToBottom, 100);
 
-      // Send to API (implement this in your chatService)
-      // await chatService.sendMessage(selectedChat.id, message.trim(), "admin");
+      // Send to API
+      await chatService.sendMessage(selectedChat.id, messageToSend);
+
+      // Refresh chats to get updated data from server
+      setTimeout(() => {
+        fetchChats(true);
+      }, 1000);
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // Revert local state if API call fails
+      setChats((prev) =>
+        prev.map((chat) => (chat.id === selectedChat.id ? selectedChat : chat))
+      );
+      setSelectedChat(selectedChat);
+      setMessage(messageToSend); // Restore the message
+
+      // Show error to user
+      alert("Failed to send message. Please try again.");
     } finally {
       hideLoading();
     }
@@ -242,9 +310,21 @@ export default function ModernChats() {
                     {chats.filter((c) => !c.readByAdmin).length} unread
                   </Typography>
                 </div>
-                {refreshing && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                )}
+                <div className="flex items-center gap-2">
+                  {refreshing && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  )}
+                  <IconButton
+                    onClick={handleManualRefresh}
+                    disabled={refreshing}
+                    size="small"
+                    className={`text-blue-600 hover:bg-blue-50 ${
+                      refreshing ? "opacity-50" : ""
+                    }`}
+                  >
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
+                </div>
               </div>
             </div>
 
@@ -344,58 +424,146 @@ export default function ModernChats() {
             <Card className="h-full flex flex-col">
               {/* Chat Header */}
               <div className="p-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar sx={{ width: 48, height: 48, bgcolor: "#3b82f6" }}>
-                    {selectedChat.userName?.charAt(0)?.toUpperCase() || "U"}
-                  </Avatar>
-                  <div className="flex-1">
-                    <Typography
-                      variant="h6"
-                      className="font-semibold text-gray-800"
-                    >
-                      {selectedChat.userName || "Unknown User"}
-                    </Typography>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <PhoneIcon sx={{ fontSize: 16, color: "#6b7280" }} />
-                        <Typography variant="body2" className="text-gray-500">
-                          {selectedChat.userPhone || "No phone"}
-                        </Typography>
-                      </div>
-                      <Chip
-                        size="small"
-                        label={selectedChat.readByAdmin ? "Read" : "Unread"}
-                        color={selectedChat.readByAdmin ? "success" : "warning"}
-                        variant="outlined"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Car Details */}
+                {/* Combined Person and Car Details */}
                 {carDetails && (
                   <div className="bg-white p-4 rounded border border-slate-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CarIcon sx={{ fontSize: 20, color: "#3b82f6" }} />
-                      <Typography variant="subtitle2" className="font-semibold">
-                        {carDetails.carBrand} {carDetails.carModel}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={carDetails.carStatus}
-                        color={
-                          carDetails.carStatus === "approved"
-                            ? "success"
-                            : "warning"
-                        }
-                        variant="filled"
-                      />
+                    <div className="flex gap-4 h-32">
+                      {/* Car Image - Left */}
+                      <div className="flex-shrink-0 h-full">
+                        {carDetails.images && carDetails.images.length > 0 ? (
+                          <img
+                            src={carDetails.images[0]}
+                            alt={`${carDetails.carBrand} ${carDetails.carModel}`}
+                            className="w-32 h-full object-cover rounded-lg border border-slate-200 shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              if (e.currentTarget.nextElementSibling) {
+                                (
+                                  e.currentTarget
+                                    .nextElementSibling as HTMLElement
+                                ).style.display = "flex";
+                              }
+                            }}
+                          />
+                        ) : null}
+                        {/* Fallback placeholder */}
+                        <div
+                          className="w-32 h-full bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center"
+                          style={{
+                            display:
+                              carDetails.images && carDetails.images.length > 0
+                                ? "none"
+                                : "flex",
+                          }}
+                        >
+                          <CarIcon sx={{ fontSize: 48, color: "#94a3b8" }} />
+                        </div>
+                      </div>
+
+                      {/* Car Details - Middle */}
+                      <div className="flex-1 min-w-0 h-full flex flex-col justify-between px-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Typography
+                            variant="h6"
+                            className="font-semibold text-gray-800"
+                          >
+                            {carDetails.carBrand} {carDetails.carModel}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={carDetails.carStatus}
+                            color={
+                              carDetails.carStatus === "approved"
+                                ? "success"
+                                : carDetails.carStatus === "rejected"
+                                ? "error"
+                                : "warning"
+                            }
+                            variant="filled"
+                            className="text-xs"
+                          />
+                        </div>
+
+                        <div className="flex-1 space-y-2 text-sm">
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Price:
+                              </span>
+                              <div className="text-green-600 font-semibold">
+                                ₹{carDetails.exceptedPrice?.toLocaleString()}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Year:
+                              </span>
+                              <div className="text-gray-600">
+                                {carDetails.modelYear}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                KM:
+                              </span>
+                              <div className="text-gray-600">
+                                {carDetails.km?.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Fuel:
+                              </span>
+                              <div className="text-gray-600 capitalize">
+                                {carDetails.fuelType}
+                              </div>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="font-medium text-gray-700">
+                                Location:
+                              </span>
+                              <div className="text-gray-600">
+                                {carDetails.location}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Person Info - Right */}
+                      <div className="flex-shrink-0 h-full flex flex-col justify-center pl-4 border-l border-slate-200">
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            sx={{ width: 48, height: 48, bgcolor: "#3b82f6" }}
+                          >
+                            {selectedChat.userName?.charAt(0)?.toUpperCase() ||
+                              "U"}
+                          </Avatar>
+                          <div>
+                            <Typography
+                              variant="h6"
+                              className="font-semibold text-gray-800"
+                            >
+                              {selectedChat.userName || "Unknown User"}
+                            </Typography>
+                            <div className="flex items-center gap-1 mt-1">
+                              <PhoneIcon
+                                sx={{ fontSize: 14, color: "#6b7280" }}
+                              />
+                              <Typography
+                                variant="body2"
+                                className="text-gray-500 text-sm"
+                              >
+                                {selectedChat.userPhone || "No phone"}
+                              </Typography>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <Typography variant="body2" className="text-gray-500">
-                      Price: ₹{carDetails.exceptedPrice?.toLocaleString()} •
-                      Year: {carDetails.modelYear} • Location:{" "}
-                      {carDetails.location}
-                    </Typography>
                   </div>
                 )}
               </div>
@@ -426,36 +594,39 @@ export default function ModernChats() {
                   },
                 }}
               >
-                {selectedChat.messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex mb-4 ${
-                      msg.sentBy === "admin" ? "justify-end" : "justify-start"
-                    }`}
-                  >
+                {selectedChat.messages
+                  .slice()
+                  .reverse()
+                  .map((msg, index) => (
                     <div
-                      className={`max-w-[70%] p-4 rounded-lg break-words ${
-                        msg.sentBy === "admin"
-                          ? "bg-blue-500 text-white"
-                          : "bg-slate-100 text-gray-800"
+                      key={index}
+                      className={`flex mb-4 ${
+                        msg.sentBy === "admin" ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <Typography variant="body2" className="break-words">
-                        {msg.message}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        className={`text-xs mt-1 block ${
+                      <div
+                        className={`max-w-[70%] p-4 rounded-lg break-words ${
                           msg.sentBy === "admin"
-                            ? "text-white/70"
-                            : "text-gray-500"
+                            ? "bg-blue-500 text-white"
+                            : "bg-slate-100 text-gray-800"
                         }`}
                       >
-                        {dayjs(msg.timeStamp).format("HH:mm")}
-                      </Typography>
+                        <Typography variant="body2" className="break-words">
+                          {msg.message}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          className={`text-xs mt-1 block ${
+                            msg.sentBy === "admin"
+                              ? "text-white/70"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {dayjs(msg.timeStamp).format("HH:mm")}
+                        </Typography>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 {/* Invisible div for auto-scrolling */}
                 <div ref={messagesEndRef} />
               </Box>

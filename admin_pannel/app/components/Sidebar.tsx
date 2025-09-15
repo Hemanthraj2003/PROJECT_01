@@ -62,9 +62,27 @@ export default function Sidebar() {
 
     if (isAuthenticated) {
       fetchUnreadCount();
-      // Refresh count every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
+
+      // Remove polling, only listen for read status changes via events
+      // const interval = setInterval(fetchUnreadCount, 15000);
+
+      // Listen for custom event from chat page
+      const handleChatReadStatusChanged = () => {
+        fetchUnreadCount();
+      };
+
+      window.addEventListener(
+        "chatReadStatusChanged",
+        handleChatReadStatusChanged
+      );
+
+      return () => {
+        // clearInterval(interval);
+        window.removeEventListener(
+          "chatReadStatusChanged",
+          handleChatReadStatusChanged
+        );
+      };
     }
   }, [isAuthenticated]);
 

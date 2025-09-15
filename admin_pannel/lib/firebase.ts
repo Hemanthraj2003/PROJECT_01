@@ -1,6 +1,13 @@
 import * as admin from "firebase-admin";
 
-if (!admin.apps.length) {
+// Singleton pattern to ensure Firebase is only initialized once
+let firebaseInitialized = false;
+
+const initializeFirebase = () => {
+  if (firebaseInitialized || admin.apps.length > 0) {
+    return;
+  }
+
   try {
     const serviceAccount = {
       type: "service_account",
@@ -26,15 +33,17 @@ if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
     });
-    console.log(
-      "Firebase Admin initialized successfully with environment variables"
-    );
+
+    firebaseInitialized = true;
   } catch (error) {
     console.error("Firebase Admin initialization error:", error);
     console.error("Make sure all required environment variables are set");
     throw error;
   }
-}
+};
+
+// Initialize Firebase immediately
+initializeFirebase();
 
 // Firestore database instance
 const db = admin.firestore();
