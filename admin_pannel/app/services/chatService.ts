@@ -150,6 +150,13 @@ export const chatService = {
       const data = await fetchWithError<{ success: boolean; data: Chat }>(
         `${API_URL}/chats/${chatId}`,
         {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            calledBy: "admin", // Required parameter for your API
+          }),
           cache: "no-store",
         }
       );

@@ -5,28 +5,39 @@ import Cookies from "js-cookie";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
+  isLoading: true,
   login: async () => false,
   logout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     // Check if there's an active session on mount
-    const authToken = Cookies.get("adminAuthToken");
-    if (authToken) {
-      setIsAuthenticated(true);
-    } else if (window.location.pathname !== "/login") {
-      router.push("/login");
-    }
+    const checkAuth = () => {
+      const authToken = Cookies.get("adminAuthToken");
+      if (authToken) {
+        setIsAuthenticated(true);
+      } else if (
+        typeof window !== "undefined" &&
+        window.location.pathname !== "/login"
+      ) {
+        router.push("/login");
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, [router]);
 
   const login = async (
@@ -36,7 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // For demo purposes, we'll use hardcoded credentials
       // In production, this should make an API call to validate credentials
-      if (username === "admin" && password === "admin123") {
+      if (
+        (username === "admin" && password === "admin") ||
+        (username === "Admin" && password === "Admin")
+      ) {
         // Set cookie with 1 day expiration
         Cookies.set("adminAuthToken", "demo-token", { expires: 1 });
         setIsAuthenticated(true);
@@ -60,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,11 +12,18 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/authContext";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("Admin");
+  const [password, setPassword] = useState("Admin");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +40,19 @@ export default function Login() {
       setError("An error occurred during login");
     }
   };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Paper elevation={3} className="p-8 w-full max-w-md">
+          <div className="text-center">
+            <Typography variant="h6">Loading...</Typography>
+          </div>
+        </Paper>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -83,12 +103,6 @@ export default function Login() {
             Sign In
           </Button>
         </form>
-
-        <Box mt={4}>
-          <Typography variant="body2" align="center" color="textSecondary">
-            Default credentials: admin / admin123
-          </Typography>
-        </Box>
       </Paper>
     </div>
   );
