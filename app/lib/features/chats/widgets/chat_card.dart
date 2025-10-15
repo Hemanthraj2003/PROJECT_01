@@ -52,130 +52,171 @@ class ChatCard extends StatelessWidget {
     final isUnread = chat.isUnread;
 
     return Card(
-      elevation: isUnread ? 4 : 2,
+      elevation: isUnread ? 6 : 2,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isUnread
-            ? BorderSide(color: AppColors.primary.withOpacity(0.3), width: 1)
+            ? BorderSide(color: AppColors.primary.withOpacity(0.5), width: 2)
             : BorderSide.none,
       ),
+      shadowColor: isUnread
+          ? AppColors.primary.withOpacity(0.3)
+          : Colors.black.withOpacity(0.1),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Car Icon/Avatar
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
+        child: Container(
+          decoration: isUnread
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
                   gradient: LinearGradient(
-                    colors: isUnread
-                        ? AppColors.gradientPrimary
-                        : [AppColors.greyLight, AppColors.grey],
+                    colors: [
+                      AppColors.primaryLight.withOpacity(0.05),
+                      AppColors.background,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.directions_car,
-                  color: AppColors.textLight,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Chat Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Car Title
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            car != null
-                                ? '${car!.carBrand} ${car!.carModel}'
-                                : 'Car #${chat.carId.substring(chat.carId.length > 8 ? chat.carId.length - 8 : 0)}',
-                            style:
-                                AppTypography.subtitle1Style(
-                                  color: AppColors.textPrimary,
-                                ).copyWith(
-                                  fontWeight: isUnread
-                                      ? FontWeight.bold
-                                      : FontWeight.w600,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Time
-                        Text(
-                          _formatTime(chat.lastMessageAt),
-                          style:
-                              AppTypography.captionStyle(
-                                color: isUnread
-                                    ? AppColors.primary
-                                    : AppColors.textSecondary,
-                              ).copyWith(
-                                fontWeight: isUnread
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                        ),
-                      ],
+                )
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Car Icon/Avatar
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isUnread
+                          ? AppColors.gradientPrimary
+                          : [AppColors.greyLight, AppColors.grey],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(height: 4),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: isUnread
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: const Icon(
+                    Icons.directions_car,
+                    color: AppColors.textLight,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-                    // Last Message
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            lastMessage?.message ?? 'No messages yet',
+                // Chat Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Car Title
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              car != null
+                                  ? '${car!.carBrand} ${car!.carModel}'
+                                  : 'Car #${chat.carId.substring(chat.carId.length > 8 ? chat.carId.length - 8 : 0)}',
+                              style:
+                                  AppTypography.subtitle1Style(
+                                    color: AppColors.textPrimary,
+                                  ).copyWith(
+                                    fontWeight: isUnread
+                                        ? FontWeight.bold
+                                        : FontWeight.w600,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Time
+                          Text(
+                            _formatTime(chat.lastMessageAt),
                             style:
-                                AppTypography.body2Style(
+                                AppTypography.captionStyle(
                                   color: isUnread
-                                      ? AppColors.textPrimary
+                                      ? AppColors.primary
                                       : AppColors.textSecondary,
                                 ).copyWith(
                                   fontWeight: isUnread
-                                      ? FontWeight.w500
+                                      ? FontWeight.bold
                                       : FontWeight.normal,
                                 ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isUnread) ...[
-                          const SizedBox(width: 8),
-                          // Unread Badge
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.circle,
-                              color: AppColors.textLight,
-                              size: 8,
-                            ),
                           ),
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Last Message
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              lastMessage?.message ?? 'No messages yet',
+                              style:
+                                  AppTypography.body2Style(
+                                    color: isUnread
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontWeight: isUnread
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isUnread) ...[
+                            const SizedBox(width: 8),
+                            // Unread Badge with pulse effect
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: AppColors.gradientPrimary,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.circle,
+                                  color: AppColors.textLight,
+                                  size: 10,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

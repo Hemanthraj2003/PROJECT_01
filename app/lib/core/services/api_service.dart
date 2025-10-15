@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../constants/app_constants.dart';
 
@@ -123,6 +124,67 @@ class ApiService {
       throw Exception(AppConstants.offlineError);
     } catch (e) {
       throw Exception(e.toString());
+    }
+  }
+
+  // Upload images
+  Future<dynamic> uploadImages(List<dynamic> images) async {
+    if (!await _checkNetwork()) {
+      throw Exception(AppConstants.offlineError);
+    }
+
+    try {
+      final uri = Uri.parse(
+        '${AppConstants.baseUrl}${AppConstants.uploadImagesEndpoint}',
+      );
+
+      var request = http.MultipartRequest('POST', uri);
+
+      // Add files to request
+      for (var image in images) {
+        if (image is File) {
+          // Get file extension to determine mime type
+          final extension = image.path.split('.').last.toLowerCase();
+
+          var multipartFile = await http.MultipartFile.fromPath(
+            'images',
+            image.path,
+            contentType: MediaType(
+              'image',
+              extension == 'png' ? 'png' : 'jpeg',
+            ),
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      print('Uploading ${images.length} images to: $uri');
+      print('Request files: ${request.files.length}');
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('Upload response status: ${response.statusCode}');
+      print('Upload response body: ${response.body}');
+
+      // Handle empty response body
+      if (response.body.isEmpty) {
+        if (response.statusCode == 405) {
+          throw Exception(
+            'Upload endpoint not available. Please contact support.',
+          );
+        }
+        throw Exception(
+          'Server returned empty response (${response.statusCode})',
+        );
+      }
+
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception(AppConstants.offlineError);
+    } catch (e) {
+      print('Image upload error: $e');
+      throw Exception('Failed to upload images: ${e.toString()}');
     }
   }
 

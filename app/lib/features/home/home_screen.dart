@@ -5,6 +5,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/providers/user_provider.dart';
 import 'buy_cars_screen.dart';
+import 'favorites_screen.dart';
+import 'my_cars_screen.dart';
+import 'sell_car_screen.dart';
 import '../chats/chats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,79 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return const BuyCarsScreen();
       case 1:
-        return _buildMyCarsPage();
+        return const MyCarsScreen();
       case 2:
-        return _buildSellCarsPage();
+        return const SellCarScreen();
       case 3:
-        return _buildFavoritesPage();
+        return const FavoritesScreen();
       case 4:
         return _buildChatsPage();
       default:
         return const BuyCarsScreen();
     }
-  }
-
-  Widget _buildMyCarsPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.car_rental, size: 80, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text(
-            'My Cars',
-            style: AppTypography.h2Style(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Your posted cars',
-            style: AppTypography.body1Style(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSellCarsPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.sell, size: 80, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text(
-            'Sell Your Car',
-            style: AppTypography.h2Style(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Post your car for sale',
-            style: AppTypography.body1Style(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFavoritesPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.favorite, size: 80, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text(
-            'Favorites',
-            style: AppTypography.h2Style(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Your liked cars',
-            style: AppTypography.body1Style(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildChatsPage() {

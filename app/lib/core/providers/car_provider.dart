@@ -117,13 +117,13 @@ class CarProvider with ChangeNotifier {
   }
 
   // Post car for approval
-  Future<Car> postCar(Map<String, dynamic> carData) async {
+  Future<Map<String, dynamic>> postCar(Map<String, dynamic> carData) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      final car = await _carService.postCarForApproval(carData);
-      return car;
+      final carResponse = await _carService.postCarForApproval(carData);
+      return carResponse;
     } catch (e) {
       debugPrint('Post car error: $e');
       rethrow;

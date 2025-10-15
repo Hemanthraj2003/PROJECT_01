@@ -6,7 +6,9 @@ class User {
   final String? city;
   final String? state;
   final List<String> likedCars;
-  final List<String> myCars;
+  final List<String> onSaleCars;
+  final List<String> boughtCars;
+  final List<String> soldCars;
   final DateTime? createdAt;
 
   User({
@@ -17,10 +19,14 @@ class User {
     this.city,
     this.state,
     List<String>? likedCars,
-    List<String>? myCars,
+    List<String>? onSaleCars,
+    List<String>? boughtCars,
+    List<String>? soldCars,
     this.createdAt,
   }) : likedCars = likedCars ?? [],
-       myCars = myCars ?? [];
+       onSaleCars = onSaleCars ?? [],
+       boughtCars = boughtCars ?? [],
+       soldCars = soldCars ?? [];
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -32,7 +38,9 @@ class User {
       city: json['city'],
       state: json['state'],
       likedCars: List<String>.from(json['likedCars'] ?? []),
-      myCars: List<String>.from(json['myCars'] ?? []),
+      onSaleCars: List<String>.from(json['onSaleCars'] ?? []),
+      boughtCars: List<String>.from(json['boughtCars'] ?? []),
+      soldCars: List<String>.from(json['soldCars'] ?? []),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -48,7 +56,9 @@ class User {
       'city': city,
       'state': state,
       'likedCars': likedCars,
-      'myCars': myCars,
+      'onSaleCars': onSaleCars,
+      'boughtCars': boughtCars,
+      'soldCars': soldCars,
       'createdAt': createdAt?.toIso8601String(),
     };
   }
@@ -61,7 +71,9 @@ class User {
     String? city,
     String? state,
     List<String>? likedCars,
-    List<String>? myCars,
+    List<String>? onSaleCars,
+    List<String>? boughtCars,
+    List<String>? soldCars,
     DateTime? createdAt,
   }) {
     return User(
@@ -72,7 +84,9 @@ class User {
       city: city ?? this.city,
       state: state ?? this.state,
       likedCars: likedCars ?? this.likedCars,
-      myCars: myCars ?? this.myCars,
+      onSaleCars: onSaleCars ?? this.onSaleCars,
+      boughtCars: boughtCars ?? this.boughtCars,
+      soldCars: soldCars ?? this.soldCars,
       createdAt: createdAt ?? this.createdAt,
     );
   }

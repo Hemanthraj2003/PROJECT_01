@@ -69,7 +69,12 @@ class UserProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      final updatedData = {..._user!.toJson(), ...updates};
+      // Merge current user data with updates and include 'id' field for backend
+      final updatedData = {
+        ..._user!.toJson(),
+        ...updates,
+        'id': _user!.uid, // Backend expects 'id' field
+      };
 
       final updatedUser = await _userService.updateUserData(updatedData);
       await setUser(updatedUser);

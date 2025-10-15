@@ -22,11 +22,27 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
   final ChatService _chatService = ChatService();
   bool _isLiked = false;
   bool _isStartingChat = false;
+  bool _isTogglingLike = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfLiked();
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _checkIfLiked() {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      setState(() {
+        _isLiked = user.likedCars.contains(widget.car.id);
+      });
+    }
   }
 
   Future<void> _startChatWithUs() async {
@@ -553,13 +569,15 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             ),
             const SizedBox(width: 8),
             Container(
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: _isLiked ? AppColors.primaryLight : AppColors.background,
+                color: AppColors.background,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
                     color: _isLiked
-                        ? AppColors.primary.withOpacity(0.18)
+                        ? AppColors.primary.withOpacity(0.2)
                         : Colors.black.withOpacity(0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -567,22 +585,79 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
                 ],
               ),
               child: IconButton(
-                icon: Icon(
-                  _isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: _isLiked ? AppColors.primary : AppColors.primaryDark,
-                  size: 32,
+                icon: ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: AppColors.gradientPrimary,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Icon(
+                    _isLiked ? Icons.favorite : Icons.favorite_border,
+                    color: AppColors.textLight,
+                    size: 28,
+                  ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _isLiked = !_isLiked;
-                  });
-                  // TODO: Implement like functionality with user provider
-                },
+                onPressed: _isTogglingLike ? null : _toggleLike,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _toggleLike() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    if (userProvider.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to like cars'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTogglingLike = true;
+      _isLiked = !_isLiked;
+    });
+
+    try {
+      await userProvider.toggleLikedCar(widget.car.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isLiked ? 'Added to favorites' : 'Removed from favorites',
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          _isLiked = !_isLiked;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorites: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingLike = false;
+        });
+      }
+    }
   }
 }

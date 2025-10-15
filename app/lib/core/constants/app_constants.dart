@@ -12,6 +12,7 @@ class AppConstants {
   static const String chatsEndpoint = '/chats';
   static const String postCarEndpoint = '/cars/post';
   static const String getMyCarsEndpoint = '/cars/getMyCars';
+  static const String uploadImagesEndpoint = '/upload-images';
 
   // Storage Keys
   static const String userKey = 'user_data';

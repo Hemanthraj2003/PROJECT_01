@@ -89,7 +89,9 @@ class CarService {
   }
 
   // Post car for approval
-  Future<Car> postCarForApproval(Map<String, dynamic> carData) async {
+  Future<Map<String, dynamic>> postCarForApproval(
+    Map<String, dynamic> carData,
+  ) async {
     try {
       final response = await _apiService.post(
         AppConstants.postCarEndpoint,
@@ -97,11 +99,26 @@ class CarService {
       );
 
       if (response['success'] == true) {
-        return Car.fromJson(response['data']);
+        return response['data'];
       } else {
         throw Exception(
           response['message'] ?? 'Failed to post car for approval',
         );
+      }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  // Upload images
+  Future<List<String>> uploadImages(List<dynamic> images) async {
+    try {
+      final response = await _apiService.uploadImages(images);
+
+      if (response['success'] == true) {
+        return List<String>.from(response['imageUrls'] ?? []);
+      } else {
+        throw Exception(response['message'] ?? 'Failed to upload images');
       }
     } catch (e) {
       throw Exception(e.toString());

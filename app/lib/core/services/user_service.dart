@@ -44,7 +44,7 @@ class UserService {
   Future<User> updateUserData(Map<String, dynamic> userInfo) async {
     try {
       final response = await _apiService.put(
-        '${AppConstants.usersEndpoint}/${userInfo['uid']}',
+        '${AppConstants.usersEndpoint}/update',
         body: userInfo,
       );
 
