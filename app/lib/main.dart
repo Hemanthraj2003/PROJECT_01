@@ -3,9 +3,13 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/user_provider.dart';
 import 'core/providers/car_provider.dart';
+import 'core/services/cache_service.dart';
 import 'features/splash/splash_screen.dart';
 
 void main() {
+  // Initialize cache service
+  CacheService().initialize();
+
   runApp(const MyApp());
 }
 

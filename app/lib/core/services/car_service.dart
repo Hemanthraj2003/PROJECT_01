@@ -1,9 +1,11 @@
 import '../models/car_model.dart';
 import '../constants/app_constants.dart';
 import 'api_service.dart';
+import 'cache_service.dart';
 
 class CarService {
   final ApiService _apiService = ApiService();
+  final CacheService _cache = CacheService();
 
   // Fetch all cars with pagination
   Future<Map<String, dynamic>> fetchAllCars({
@@ -30,7 +32,7 @@ class CarService {
     }
   }
 
-  // Fetch filtered cars
+  // Fetch filtered cars with caching
   Future<Map<String, dynamic>> fetchFilteredCars({
     List<Map<String, dynamic>> filters = const [],
     String searchTerm = '',
@@ -38,6 +40,19 @@ class CarService {
     int limit = AppConstants.defaultPageSize,
   }) async {
     try {
+      // Create cache key
+      final cacheKey =
+          'filtered_cars_${filters.toString()}_${searchTerm}_$page';
+
+      // Check cache first (only for first page)
+      if (page == 1) {
+        final cached = _cache.get<Map<String, dynamic>>(cacheKey);
+        if (cached != null) {
+          print('✅ Using cached data for: $cacheKey');
+          return cached;
+        }
+      }
+
       final queryParams = {'page': page.toString(), 'limit': limit.toString()};
 
       if (searchTerm.isNotEmpty) {
@@ -55,7 +70,17 @@ class CarService {
             .map((car) => Car.fromJson(car))
             .toList();
 
-        return {'cars': cars, 'pagination': response['pagination'] ?? {}};
+        final result = {
+          'cars': cars,
+          'pagination': response['pagination'] ?? {},
+        };
+
+        // Cache first page only (2 minutes TTL for dynamic content)
+        if (page == 1) {
+          _cache.set(cacheKey, result, ttl: const Duration(minutes: 2));
+        }
+
+        return result;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch filtered cars');
       }

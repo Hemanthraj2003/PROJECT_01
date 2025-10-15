@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/models/car_model.dart';
@@ -14,7 +15,10 @@ class BuyCarsScreen extends StatefulWidget {
   State<BuyCarsScreen> createState() => _BuyCarsScreenState();
 }
 
-class _BuyCarsScreenState extends State<BuyCarsScreen> {
+class _BuyCarsScreenState extends State<BuyCarsScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final CarService _carService = CarService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -29,19 +33,37 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
     {'field': 'carStatus', 'condition': '==', 'value': 'approved'},
   ];
 
+  // Debounce timer for search
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
     _loadCars(reset: true);
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _scrollController.dispose();
     _carService.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    // Cancel previous timer
+    _searchDebounce?.cancel();
+
+    // Start new timer
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (_searchTerm != _searchController.text) {
+        _onSearch(_searchController.text);
+      }
+    });
   }
 
   void _onScroll() {
@@ -155,6 +177,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Column(

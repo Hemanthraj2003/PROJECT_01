@@ -15,7 +15,10 @@ class SellCarScreen extends StatefulWidget {
   State<SellCarScreen> createState() => _SellCarScreenState();
 }
 
-class _SellCarScreenState extends State<SellCarScreen> {
+class _SellCarScreenState extends State<SellCarScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final _formKey = GlobalKey<FormState>();
   final CarService _carService = CarService();
   final ImagePicker _picker = ImagePicker();
@@ -283,6 +286,7 @@ class _SellCarScreenState extends State<SellCarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Form(

@@ -15,7 +15,9 @@ class MyCarsScreen extends StatefulWidget {
 }
 
 class _MyCarsScreenState extends State<MyCarsScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final CarService _carService = CarService();
   late TabController _tabController;
   List<Car> _onSaleCars = [];
@@ -96,6 +98,7 @@ class _MyCarsScreenState extends State<MyCarsScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Column(
