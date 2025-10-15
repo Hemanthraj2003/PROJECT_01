@@ -41,12 +41,13 @@ class CarService {
       final queryParams = {'page': page.toString(), 'limit': limit.toString()};
 
       if (searchTerm.isNotEmpty) {
-        queryParams['search'] = searchTerm;
+        queryParams['searchTerm'] = searchTerm;
       }
 
       final response = await _apiService.post(
         AppConstants.carsEndpoint,
         body: {'filters': filters},
+        queryParams: queryParams,
       );
 
       if (response['success'] == true) {

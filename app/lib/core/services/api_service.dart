@@ -63,13 +63,27 @@ class ApiService {
   }
 
   // Generic POST request
-  Future<dynamic> post(String endpoint, {Map<String, dynamic>? body}) async {
+  Future<dynamic> post(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? queryParams,
+  }) async {
     if (!await _checkNetwork()) {
       throw Exception(AppConstants.offlineError);
     }
 
     try {
-      final uri = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      var uri = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      
+      // Add query parameters if provided
+      if (queryParams != null && queryParams.isNotEmpty) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+
+      print('Making POST request to: $uri');
+      if (body != null) {
+        print('Request body: ${jsonEncode(body)}');
+      }
 
       final response = await _client.post(
         uri,
@@ -77,10 +91,14 @@ class ApiService {
         body: body != null ? jsonEncode(body) : null,
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       return _handleResponse(response);
     } on SocketException {
       throw Exception(AppConstants.offlineError);
     } catch (e) {
+      print('POST request error: $e');
       throw Exception(e.toString());
     }
   }

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/providers/user_provider.dart';
+import 'buy_cars_screen.dart';
+import '../chats/chats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPage(int index) {
     switch (index) {
       case 0:
-        return _buildBuyCarsPage();
+        return const BuyCarsScreen();
       case 1:
         return _buildMyCarsPage();
       case 2:
@@ -46,29 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case 4:
         return _buildChatsPage();
       default:
-        return _buildBuyCarsPage();
+        return const BuyCarsScreen();
     }
-  }
-
-  Widget _buildBuyCarsPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.directions_car, size: 80, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text(
-            'Buy Cars',
-            style: AppTypography.h2Style(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Browse available cars',
-            style: AppTypography.body1Style(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildMyCarsPage() {
@@ -135,24 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildChatsPage() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.chat_bubble, size: 80, color: AppColors.primary),
-          const SizedBox(height: 20),
-          Text(
-            'Chats',
-            style: AppTypography.h2Style(color: AppColors.textPrimary),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Your conversations',
-            style: AppTypography.body1Style(color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-    );
+    return const ChatsScreen();
   }
 
   void _showProfileModal() {

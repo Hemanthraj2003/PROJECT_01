@@ -40,28 +40,52 @@ class Car {
   });
 
   factory Car.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely parse integers
+    int _parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) {
+        return int.tryParse(value) ?? 0;
+      }
+      return 0;
+    }
+
+    // Helper function to safely parse doubles
+    double _parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        return double.tryParse(value) ?? 0.0;
+      }
+      return 0.0;
+    }
+
     return Car(
-      id: json['id'] ?? '',
-      carBrand: json['carBrand'] ?? '',
-      carModel: json['carModel'] ?? '',
-      carStatus: json['carStatus'],
-      exceptedPrice: (json['exceptedPrice'] ?? 0).toDouble(),
-      registrationNumber: json['registrationNumber'] ?? '',
-      transmissionType: json['transmissionType'] ?? '',
-      fuelType: json['fuelType'] ?? '',
-      kilometerDriven: json['kilometerDriven'] ?? 0,
-      ownerChange: json['ownerChange'] ?? 0,
-      color: json['color'] ?? '',
-      manufacturingYear: json['manufacturingYear'] ?? '',
-      images: List<String>.from(json['images'] ?? []),
-      sellerUid: json['sellerUid'] ?? '',
-      location: json['location'],
-      description: json['description'],
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : null,
+      id: json['id']?.toString() ?? '',
+      carBrand: json['carBrand']?.toString() ?? '',
+      carModel: json['carModel']?.toString() ?? '',
+      carStatus: json['carStatus']?.toString(),
+      exceptedPrice: _parseDouble(json['exceptedPrice']),
+      registrationNumber: json['registrationNumber']?.toString() ?? '',
+      transmissionType: json['transmissionType']?.toString() ?? '',
+      fuelType: json['fuelType']?.toString() ?? '',
+      kilometerDriven: _parseInt(json['km'] ?? json['kilometerDriven']),
+      ownerChange: _parseInt(json['ownerNumber'] ?? json['ownerChange']),
+      color: json['color']?.toString() ?? '',
+      manufacturingYear: json['modelYear']?.toString() ?? json['manufacturingYear']?.toString() ?? '',
+      images: json['images'] != null ? List<String>.from(json['images'].map((e) => e.toString())) : [],
+      sellerUid: json['postedBy']?.toString() ?? json['sellerUid']?.toString() ?? '',
+      location: json['location']?.toString(),
+      description: json['description']?.toString(),
+      createdAt: json['postedDate'] != null
+          ? DateTime.tryParse(json['postedDate'].toString())
+          : (json['createdAt'] != null
+              ? DateTime.tryParse(json['createdAt'].toString())
+              : null),
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? DateTime.tryParse(json['updatedAt'].toString())
           : null,
     );
   }
