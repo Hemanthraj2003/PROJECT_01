@@ -7,20 +7,14 @@ class CarCard extends StatelessWidget {
   final Car car;
   final VoidCallback onTap;
 
-  const CarCard({
-    super.key,
-    required this.car,
-    required this.onTap,
-  });
+  const CarCard({super.key, required this.car, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
       shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
@@ -66,10 +60,10 @@ class CarCard extends StatelessWidget {
                               color: AppColors.greyLight,
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                            loadingProgress.expectedTotalBytes!
                                       : null,
                                   color: AppColors.primary,
                                 ),
@@ -114,8 +108,10 @@ class CarCard extends StatelessWidget {
                   bottom: 12,
                   right: 12,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(20),
@@ -166,8 +162,9 @@ class CarCard extends StatelessWidget {
                   // Car Name
                   Text(
                     '${car.carBrand} ${car.carModel}',
-                    style:
-                        AppTypography.subtitle1Style(color: AppColors.textPrimary),
+                    style: AppTypography.subtitle1Style(
+                      color: AppColors.textPrimary,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -181,15 +178,9 @@ class CarCard extends StatelessWidget {
                         Icons.speed,
                         '${car.kilometerDriven} Km',
                       ),
-                      _buildDetailChip(
-                        Icons.local_gas_station,
-                        car.fuelType,
-                      ),
+                      _buildDetailChip(Icons.local_gas_station, car.fuelType),
                       if (car.transmissionType.isNotEmpty)
-                        _buildDetailChip(
-                          Icons.settings,
-                          car.transmissionType,
-                        ),
+                        _buildDetailChip(Icons.settings, car.transmissionType),
                     ],
                   ),
                 ],
@@ -211,11 +202,7 @@ class CarCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: AppColors.textLight,
-          ),
+          Icon(icon, size: 14, color: AppColors.textLight),
           const SizedBox(width: 4),
           Text(
             label,

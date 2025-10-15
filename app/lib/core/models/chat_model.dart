@@ -18,11 +18,7 @@ class ChatMessage {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'sentBy': sentBy,
-      'message': message,
-      'timeStamp': timeStamp,
-    };
+    return {'sentBy': sentBy, 'message': message, 'timeStamp': timeStamp};
   }
 }
 
@@ -55,8 +51,8 @@ class Chat {
       lastMessageAt: json['lastMessageAt']?.toString() ?? '',
       messages: json['messages'] != null
           ? (json['messages'] as List)
-              .map((msg) => ChatMessage.fromJson(msg))
-              .toList()
+                .map((msg) => ChatMessage.fromJson(msg))
+                .toList()
           : [],
     );
   }
@@ -75,6 +71,5 @@ class Chat {
 
   bool get isUnread => !readByUser;
 
-  ChatMessage? get lastMessage =>
-      messages.isNotEmpty ? messages.first : null;
+  ChatMessage? get lastMessage => messages.isNotEmpty ? messages.first : null;
 }

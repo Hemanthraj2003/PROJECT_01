@@ -14,11 +14,7 @@ class ConversationScreen extends StatefulWidget {
   final Chat chat;
   final Car? car;
 
-  const ConversationScreen({
-    super.key,
-    required this.chat,
-    this.car,
-  });
+  const ConversationScreen({super.key, required this.chat, this.car});
 
   @override
   State<ConversationScreen> createState() => _ConversationScreenState();
@@ -29,7 +25,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   final CarService _carService = CarService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   List<ChatMessage> _messages = [];
   Car? _car;
   bool _isLoading = true;
@@ -42,12 +38,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
     _messages = widget.chat.messages;
     _car = widget.car;
     _isLoading = false;
-    
+
     // Fetch car details if not provided
     if (_car == null) {
       _fetchCarDetails();
     }
-    
+
     // Scroll to bottom after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
@@ -86,7 +82,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   Future<void> _sendMessage() async {
     final messageText = _messageController.text.trim();
-    
+
     if (messageText.isEmpty) {
       return;
     }
@@ -119,7 +115,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
     try {
       print('📱 ConversationScreen: Sending message');
-      
+
       final updatedChat = await _chatService.sendMessage(
         chatId: widget.chat.id,
         userId: user.uid,
@@ -134,7 +130,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       });
 
       _messageController.clear();
-      
+
       // Scroll to bottom after adding message
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
@@ -154,13 +150,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
       setState(() {
         _error = 'Failed to send message: ${e.toString()}';
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_error!),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(_error!), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -201,9 +194,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               _formatDate(timestamp),
-              style: AppTypography.captionStyle(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.captionStyle(color: AppColors.textSecondary),
             ),
           ),
           const Expanded(child: Divider(color: AppColors.grey)),
@@ -241,9 +232,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             const SizedBox(height: 8),
             Text(
               'Start a conversation!',
-              style: AppTypography.body2Style(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.body2Style(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -252,7 +241,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
     // Messages are stored newest-first, but we display oldest-first
     final displayMessages = _messages.reversed.toList();
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
@@ -260,7 +249,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       itemBuilder: (context, index) {
         final message = displayMessages[index];
         final isUser = message.sentBy == 'user';
-        
+
         // Show date separator if it's a new day
         bool showDateSeparator = false;
         if (index == 0) {
@@ -269,7 +258,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           final prevMessage = displayMessages[index - 1];
           final prevDate = DateTime.parse(prevMessage.timeStamp);
           final currentDate = DateTime.parse(message.timeStamp);
-          
+
           if (prevDate.day != currentDate.day ||
               prevDate.month != currentDate.month ||
               prevDate.year != currentDate.year) {
@@ -280,10 +269,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         return Column(
           children: [
             if (showDateSeparator) _buildDateSeparator(message.timeStamp),
-            MessageBubble(
-              message: message,
-              isUser: isUser,
-            ),
+            MessageBubble(message: message, isUser: isUser),
           ],
         );
       },
@@ -318,9 +304,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   maxLines: null,
                   maxLength: 1000,
                   textCapitalization: TextCapitalization.sentences,
-                  style: AppTypography.body1Style(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppTypography.body1Style(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'Type a message...',
                     hintStyle: AppTypography.body1Style(
@@ -506,9 +490,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       ),
       body: Column(
         children: [
-          Expanded(
-            child: _buildMessagesList(),
-          ),
+          Expanded(child: _buildMessagesList()),
           _buildMessageInput(),
         ],
       ),

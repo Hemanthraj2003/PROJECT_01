@@ -123,7 +123,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   void _applyFilters() {
     List<Map<String, dynamic>> filters = [
-      {'field': 'carStatus', 'condition': '==', 'value': 'approved'}
+      {'field': 'carStatus', 'condition': '==', 'value': 'approved'},
     ];
 
     // Price Range filters
@@ -178,8 +178,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       filters.add({
         'field': 'transmissionType',
         'condition': transmissionTypes.length == 1 ? '==' : 'in',
-        'value':
-            transmissionTypes.length == 1 ? transmissionTypes[0] : transmissionTypes,
+        'value': transmissionTypes.length == 1
+            ? transmissionTypes[0]
+            : transmissionTypes,
       });
     }
 
@@ -245,8 +246,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     children: [
                       Text(
                         'Filter',
-                        style:
-                            AppTypography.h2Style(color: AppColors.textLight),
+                        style: AppTypography.h2Style(
+                          color: AppColors.textLight,
+                        ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
@@ -273,71 +275,59 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _buildFilterSection(
-                      'Price Range',
-                      [
-                        _buildFilterChip('< 1L', pr0, () {
-                          setState(() => pr0 = !pr0);
-                        }),
-                        _buildFilterChip('1L - 3L', pr1, () {
-                          setState(() => pr1 = !pr1);
-                        }),
-                        _buildFilterChip('3L - 6L', pr2, () {
-                          setState(() => pr2 = !pr2);
-                        }),
-                        _buildFilterChip('6L - ...', pr3, () {
-                          setState(() => pr3 = !pr3);
-                        }),
-                      ],
-                    ),
+                    _buildFilterSection('Price Range', [
+                      _buildFilterChip('< 1L', pr0, () {
+                        setState(() => pr0 = !pr0);
+                      }),
+                      _buildFilterChip('1L - 3L', pr1, () {
+                        setState(() => pr1 = !pr1);
+                      }),
+                      _buildFilterChip('3L - 6L', pr2, () {
+                        setState(() => pr2 = !pr2);
+                      }),
+                      _buildFilterChip('6L - ...', pr3, () {
+                        setState(() => pr3 = !pr3);
+                      }),
+                    ]),
                     const SizedBox(height: 12),
-                    _buildFilterSection(
-                      'Fuel Type',
-                      [
-                        _buildFilterChip('Petrol', ft1, () {
-                          setState(() => ft1 = !ft1);
-                        }),
-                        _buildFilterChip('Diesel', ft2, () {
-                          setState(() => ft2 = !ft2);
-                        }),
-                        _buildFilterChip('CNG', ft3, () {
-                          setState(() => ft3 = !ft3);
-                        }),
-                        _buildFilterChip('EV', ft4, () {
-                          setState(() => ft4 = !ft4);
-                        }),
-                        _buildFilterChip('Hybrid', ft5, () {
-                          setState(() => ft5 = !ft5);
-                        }),
-                      ],
-                    ),
+                    _buildFilterSection('Fuel Type', [
+                      _buildFilterChip('Petrol', ft1, () {
+                        setState(() => ft1 = !ft1);
+                      }),
+                      _buildFilterChip('Diesel', ft2, () {
+                        setState(() => ft2 = !ft2);
+                      }),
+                      _buildFilterChip('CNG', ft3, () {
+                        setState(() => ft3 = !ft3);
+                      }),
+                      _buildFilterChip('EV', ft4, () {
+                        setState(() => ft4 = !ft4);
+                      }),
+                      _buildFilterChip('Hybrid', ft5, () {
+                        setState(() => ft5 = !ft5);
+                      }),
+                    ]),
                     const SizedBox(height: 12),
-                    _buildFilterSection(
-                      'KM Driven',
-                      [
-                        _buildFilterChip('0 - 50k km', mr1, () {
-                          setState(() => mr1 = !mr1);
-                        }),
-                        _buildFilterChip('50k - 100k km', mr2, () {
-                          setState(() => mr2 = !mr2);
-                        }),
-                        _buildFilterChip('100k+ km', mr3, () {
-                          setState(() => mr3 = !mr3);
-                        }),
-                      ],
-                    ),
+                    _buildFilterSection('KM Driven', [
+                      _buildFilterChip('0 - 50k km', mr1, () {
+                        setState(() => mr1 = !mr1);
+                      }),
+                      _buildFilterChip('50k - 100k km', mr2, () {
+                        setState(() => mr2 = !mr2);
+                      }),
+                      _buildFilterChip('100k+ km', mr3, () {
+                        setState(() => mr3 = !mr3);
+                      }),
+                    ]),
                     const SizedBox(height: 12),
-                    _buildFilterSection(
-                      'Transmission Type',
-                      [
-                        _buildFilterChip('Manual', tr1, () {
-                          setState(() => tr1 = !tr1);
-                        }),
-                        _buildFilterChip('Automatic', tr2, () {
-                          setState(() => tr2 = !tr2);
-                        }),
-                      ],
-                    ),
+                    _buildFilterSection('Transmission Type', [
+                      _buildFilterChip('Manual', tr1, () {
+                        setState(() => tr1 = !tr1);
+                      }),
+                      _buildFilterChip('Automatic', tr2, () {
+                        setState(() => tr2 = !tr2);
+                      }),
+                    ]),
                   ],
                 ),
               ),
@@ -347,10 +337,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   border: Border(
-                    top: BorderSide(
-                      color: AppColors.backgroundDark,
-                      width: 1,
-                    ),
+                    top: BorderSide(color: AppColors.backgroundDark, width: 1),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -369,7 +356,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             onPressed: _resetFilters,
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: AppColors.greyLight),
+                              side: const BorderSide(
+                                color: AppColors.greyLight,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -402,12 +391,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: ElevatedButton(
-                              onPressed: _hasActiveFilters ? _applyFilters : null,
+                              onPressed: _hasActiveFilters
+                                  ? _applyFilters
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -427,8 +419,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       const SizedBox(height: 12),
                       Text(
                         '${[pr0, pr1, pr2, pr3, ft1, ft2, ft3, ft4, ft5, mr1, mr2, mr3, tr1, tr2].where((f) => f).length} filters selected',
-                        style:
-                            AppTypography.body2Style(color: AppColors.textSecondary),
+                        style: AppTypography.body2Style(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ],
@@ -462,10 +455,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
             decoration: const BoxDecoration(
               border: Border(
-                left: BorderSide(
-                  color: AppColors.primary,
-                  width: 4,
-                ),
+                left: BorderSide(color: AppColors.primary, width: 4),
               ),
             ),
             child: Text(
@@ -474,11 +464,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ),
           ),
           const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: chips,
-          ),
+          Wrap(spacing: 8, runSpacing: 8, children: chips),
         ],
       ),
     );

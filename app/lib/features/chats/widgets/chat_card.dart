@@ -22,7 +22,11 @@ class ChatCard extends StatelessWidget {
       final messageDate = DateTime.parse(timestamp);
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      final messageDay = DateTime(messageDate.year, messageDate.month, messageDate.day);
+      final messageDay = DateTime(
+        messageDate.year,
+        messageDate.month,
+        messageDate.day,
+      );
 
       if (messageDay == today) {
         // Today - show time
@@ -99,11 +103,14 @@ class ChatCard extends StatelessWidget {
                             car != null
                                 ? '${car!.carBrand} ${car!.carModel}'
                                 : 'Car #${chat.carId.substring(chat.carId.length > 8 ? chat.carId.length - 8 : 0)}',
-                            style: AppTypography.subtitle1Style(
-                              color: AppColors.textPrimary,
-                            ).copyWith(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                            ),
+                            style:
+                                AppTypography.subtitle1Style(
+                                  color: AppColors.textPrimary,
+                                ).copyWith(
+                                  fontWeight: isUnread
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -112,11 +119,16 @@ class ChatCard extends StatelessWidget {
                         // Time
                         Text(
                           _formatTime(chat.lastMessageAt),
-                          style: AppTypography.captionStyle(
-                            color: isUnread ? AppColors.primary : AppColors.textSecondary,
-                          ).copyWith(
-                            fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
-                          ),
+                          style:
+                              AppTypography.captionStyle(
+                                color: isUnread
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ).copyWith(
+                                fontWeight: isUnread
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ],
                     ),
@@ -128,13 +140,16 @@ class ChatCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             lastMessage?.message ?? 'No messages yet',
-                            style: AppTypography.body2Style(
-                              color: isUnread
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
-                            ).copyWith(
-                              fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
-                            ),
+                            style:
+                                AppTypography.body2Style(
+                                  color: isUnread
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                                ).copyWith(
+                                  fontWeight: isUnread
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),

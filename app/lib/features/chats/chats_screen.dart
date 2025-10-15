@@ -71,8 +71,10 @@ class _ChatsScreenState extends State<ChatsScreen> {
     });
 
     try {
-      print('📱 ChatsScreen: Loading chats - UserId: ${user.uid}, Page: $_currentPage');
-      
+      print(
+        '📱 ChatsScreen: Loading chats - UserId: ${user.uid}, Page: $_currentPage',
+      );
+
       final result = await _chatService.fetchChats(
         userId: user.uid,
         page: _currentPage,
@@ -114,7 +116,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
     try {
       print('📱 ChatsScreen: Loading more chats - Page: $_currentPage');
-      
+
       final result = await _chatService.fetchChats(
         userId: user.uid,
         page: _currentPage,
@@ -163,9 +165,9 @@ class _ChatsScreenState extends State<ChatsScreen> {
       if (carIdsToFetch.isEmpty) return;
 
       print('📱 ChatsScreen: Fetching ${carIdsToFetch.length} car details');
-      
+
       final cars = await _carService.fetchCarsByIds(carIdsToFetch);
-      
+
       if (mounted) {
         setState(() {
           for (var car in cars) {
@@ -182,7 +184,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
   void _navigateToConversation(Chat chat) async {
     final car = _cars[chat.carId]; // Get car if we have it
-    
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -201,9 +203,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildBody(),
-    );
+    return Scaffold(body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -215,24 +215,16 @@ class _ChatsScreenState extends State<ChatsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
+              const Icon(Icons.error_outline, size: 64, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
                 'Error Loading Chats',
-                style: AppTypography.h2Style(
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.h2Style(color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: AppTypography.body1Style(
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTypography.body1Style(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -281,16 +273,12 @@ class _ChatsScreenState extends State<ChatsScreen> {
             const SizedBox(height: 16),
             Text(
               'No chats yet',
-              style: AppTypography.h2Style(
-                color: AppColors.textPrimary,
-              ),
+              style: AppTypography.h2Style(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               'Start a conversation by viewing a car',
-              style: AppTypography.body1Style(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.body1Style(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -320,7 +308,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 
           final chat = _chats[index];
           final car = _cars[chat.carId]; // Get car if available
-          
+
           return ChatCard(
             chat: chat,
             car: car,

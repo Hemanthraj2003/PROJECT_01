@@ -26,7 +26,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
   int _currentPage = 1;
   String _searchTerm = '';
   List<Map<String, dynamic>> _activeFilters = [
-    {'field': 'carStatus', 'condition': '==', 'value': 'approved'}
+    {'field': 'carStatus', 'condition': '==', 'value': 'approved'},
   ];
 
   @override
@@ -128,7 +128,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
         onReset: () {
           setState(() {
             _activeFilters = [
-              {'field': 'carStatus', 'condition': '==', 'value': 'approved'}
+              {'field': 'carStatus', 'condition': '==', 'value': 'approved'},
             ];
           });
           _loadCars(reset: true);
@@ -142,7 +142,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
       _searchTerm = '';
       _searchController.clear();
       _activeFilters = [
-        {'field': 'carStatus', 'condition': '==', 'value': 'approved'}
+        {'field': 'carStatus', 'condition': '==', 'value': 'approved'},
       ];
     });
     await _loadCars(reset: true);
@@ -150,9 +150,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
 
   int get _activeFilterCount {
     // Count non-status filters
-    return _activeFilters
-        .where((f) => f['field'] != 'carStatus')
-        .length;
+    return _activeFilters.where((f) => f['field'] != 'carStatus').length;
   }
 
   @override
@@ -165,13 +163,11 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   )
                 : _cars.isEmpty
-                    ? _buildEmptyState()
-                    : _buildCarsList(),
+                ? _buildEmptyState()
+                : _buildCarsList(),
           ),
         ],
       ),
@@ -212,8 +208,9 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
                 style: AppTypography.body1Style(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Search cars...',
-                  hintStyle:
-                      AppTypography.body1Style(color: AppColors.textSecondary),
+                  hintStyle: AppTypography.body1Style(
+                    color: AppColors.textSecondary,
+                  ),
                   prefixIcon: const Icon(
                     Icons.search,
                     color: AppColors.textSecondary,
@@ -291,10 +288,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
                         '$_activeFilterCount',
                         style: AppTypography.captionStyle(
                           color: AppColors.textLight,
-                        ).copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        ).copyWith(fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -311,11 +305,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: AppColors.greyLight,
-          ),
+          Icon(Icons.search_off, size: 80, color: AppColors.greyLight),
           const SizedBox(height: 20),
           Text(
             _searchTerm.isNotEmpty
@@ -347,9 +337,7 @@ class _BuyCarsScreenState extends State<BuyCarsScreen> {
             return const Padding(
               padding: EdgeInsets.all(24.0),
               child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
             );
           }

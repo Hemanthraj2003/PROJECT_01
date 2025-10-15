@@ -8,11 +8,7 @@ class MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isUser;
 
-  const MessageBubble({
-    super.key,
-    required this.message,
-    required this.isUser,
-  });
+  const MessageBubble({super.key, required this.message, required this.isUser});
 
   String _formatTime(String timestamp) {
     try {
@@ -28,7 +24,9 @@ class MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!isUser) ...[
             // Admin avatar
@@ -49,10 +47,7 @@ class MessageBubble extends StatelessWidget {
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 gradient: isUser
                     ? const LinearGradient(
@@ -82,7 +77,9 @@ class MessageBubble extends StatelessWidget {
                   Text(
                     message.message,
                     style: AppTypography.body1Style(
-                      color: isUser ? AppColors.textLight : AppColors.textPrimary,
+                      color: isUser
+                          ? AppColors.textLight
+                          : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),

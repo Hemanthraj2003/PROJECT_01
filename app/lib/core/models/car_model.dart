@@ -74,16 +74,22 @@ class Car {
       kilometerDriven: _parseInt(json['km'] ?? json['kilometerDriven']),
       ownerChange: _parseInt(json['ownerNumber'] ?? json['ownerChange']),
       color: json['color']?.toString() ?? '',
-      manufacturingYear: json['modelYear']?.toString() ?? json['manufacturingYear']?.toString() ?? '',
-      images: json['images'] != null ? List<String>.from(json['images'].map((e) => e.toString())) : [],
-      sellerUid: json['postedBy']?.toString() ?? json['sellerUid']?.toString() ?? '',
+      manufacturingYear:
+          json['modelYear']?.toString() ??
+          json['manufacturingYear']?.toString() ??
+          '',
+      images: json['images'] != null
+          ? List<String>.from(json['images'].map((e) => e.toString()))
+          : [],
+      sellerUid:
+          json['postedBy']?.toString() ?? json['sellerUid']?.toString() ?? '',
       location: json['location']?.toString(),
       description: json['description']?.toString(),
       createdAt: json['postedDate'] != null
           ? DateTime.tryParse(json['postedDate'].toString())
           : (json['createdAt'] != null
-              ? DateTime.tryParse(json['createdAt'].toString())
-              : null),
+                ? DateTime.tryParse(json['createdAt'].toString())
+                : null),
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'].toString())
           : null,

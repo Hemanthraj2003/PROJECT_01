@@ -74,7 +74,7 @@ class ApiService {
 
     try {
       var uri = Uri.parse('${AppConstants.baseUrl}$endpoint');
-      
+
       // Add query parameters if provided
       if (queryParams != null && queryParams.isNotEmpty) {
         uri = uri.replace(queryParameters: queryParams);

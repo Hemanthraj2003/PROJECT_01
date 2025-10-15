@@ -11,17 +11,18 @@ class ChatService {
     int limit = 10,
   }) async {
     try {
-      print('📱 ChatService: Fetching chats - UserId: $userId, Page: $page, Limit: $limit');
-      
-      final response = await _apiService.post(
-        '/chats/user/$userId',
-        body: {
-          'currentPage': page,
-          'pageSize': limit,
-        },
+      print(
+        '📱 ChatService: Fetching chats - UserId: $userId, Page: $page, Limit: $limit',
       );
 
-      print('✅ ChatService: Response received - Success: ${response['success']}');
+      final response = await _apiService.post(
+        '/chats/user/$userId',
+        body: {'currentPage': page, 'pageSize': limit},
+      );
+
+      print(
+        '✅ ChatService: Response received - Success: ${response['success']}',
+      );
 
       if (response['success'] == true) {
         final chats = (response['data'] as List)
@@ -31,11 +32,8 @@ class ChatService {
         print('✅ ChatService: Parsed ${chats.length} chats');
 
         final pagination = response['pagination'] as Map<String, dynamic>?;
-        
-        return {
-          'chats': chats,
-          'pagination': pagination ?? {},
-        };
+
+        return {'chats': chats, 'pagination': pagination ?? {}};
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch chats');
       }
@@ -52,16 +50,15 @@ class ChatService {
   }) async {
     try {
       print('📱 ChatService: Starting chat - CarId: $carId, UserId: $userId');
-      
+
       final response = await _apiService.post(
         '/chats/start',
-        body: {
-          'carId': carId,
-          'userId': userId,
-        },
+        body: {'carId': carId, 'userId': userId},
       );
 
-      print('✅ ChatService: Start chat response - Success: ${response['success']}');
+      print(
+        '✅ ChatService: Start chat response - Success: ${response['success']}',
+      );
 
       if (response['success'] == true) {
         return Chat.fromJson(response['chat']);
@@ -86,7 +83,9 @@ class ChatService {
       }
 
       if (content.length > 1000) {
-        throw Exception('Message is too long. Maximum 1000 characters allowed.');
+        throw Exception(
+          'Message is too long. Maximum 1000 characters allowed.',
+        );
       }
 
       print('📱 ChatService: Sending message to chat: $chatId');
@@ -99,11 +98,7 @@ class ChatService {
 
       final response = await _apiService.post(
         '/chats/send',
-        body: {
-          'chatId': chatId,
-          'userId': userId,
-          'messageData': messageData,
-        },
+        body: {'chatId': chatId, 'userId': userId, 'messageData': messageData},
       );
 
       print('✅ ChatService: Message sent - Success: ${response['success']}');
@@ -123,18 +118,16 @@ class ChatService {
   Future<void> markAsRead(String chatId) async {
     try {
       print('📱 ChatService: Marking chat as read: $chatId');
-      
+
       final response = await _apiService.post(
         '/chats/read',
-        body: {
-          'chatId': chatId,
-        },
+        body: {'chatId': chatId},
       );
 
       if (response['success'] != true) {
         throw Exception(response['message'] ?? 'Failed to mark as read');
       }
-      
+
       print('✅ ChatService: Chat marked as read');
     } catch (e) {
       print('❌ ChatService Error: $e');

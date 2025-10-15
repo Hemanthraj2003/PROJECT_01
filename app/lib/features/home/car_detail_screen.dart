@@ -10,10 +10,7 @@ import '../chats/conversation_screen.dart';
 class CarDetailScreen extends StatefulWidget {
   final Car car;
 
-  const CarDetailScreen({
-    super.key,
-    required this.car,
-  });
+  const CarDetailScreen({super.key, required this.car});
 
   @override
   State<CarDetailScreen> createState() => _CarDetailScreenState();
@@ -34,7 +31,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
 
   Future<void> _startChatWithUs() async {
     final user = Provider.of<UserProvider>(context, listen: false).user;
-    
+
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -51,22 +48,20 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
 
     try {
       print('🚗 Starting chat for car: ${widget.car.id}, user: ${user.uid}');
-      
+
       final chat = await _chatService.startChat(
         carId: widget.car.id,
         userId: user.uid,
       );
-      
+
       print('✅ Chat created/fetched: ${chat.id}');
 
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ConversationScreen(
-              chat: chat,
-              car: widget.car,
-            ),
+            builder: (context) =>
+                ConversationScreen(chat: chat, car: widget.car),
           ),
         );
       }
@@ -141,11 +136,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
           borderRadius: BorderRadius.circular(18),
         ),
         child: const Center(
-          child: Icon(
-            Icons.directions_car,
-            size: 80,
-            color: AppColors.grey,
-          ),
+          child: Icon(Icons.directions_car, size: 80, color: AppColors.grey),
         ),
       );
     }
@@ -196,7 +187,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                       color: AppColors.primary,
                     ),
@@ -230,10 +221,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
                   : AppColors.greyLight,
               shape: BoxShape.circle,
               border: _currentImageIndex == index
-                  ? Border.all(
-                      color: AppColors.primaryLight,
-                      width: 2,
-                    )
+                  ? Border.all(color: AppColors.primaryLight, width: 2)
                   : null,
             ),
           ),
@@ -279,8 +267,9 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
           const SizedBox(height: 4),
           Text(
             widget.car.carModel,
-            style: AppTypography.subtitle1Style(color: AppColors.textLight)
-                .copyWith(fontWeight: FontWeight.bold),
+            style: AppTypography.subtitle1Style(
+              color: AppColors.textLight,
+            ).copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
           Text(
@@ -301,18 +290,12 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildSpecBlock(
-                  Icons.local_gas_station,
-                  widget.car.fuelType,
-                ),
+                _buildSpecBlock(Icons.local_gas_station, widget.car.fuelType),
                 _buildSpecBlock(
                   Icons.speed,
                   '${(widget.car.kilometerDriven / 1000).toStringAsFixed(0)}k km',
                 ),
-                _buildSpecBlock(
-                  Icons.settings,
-                  widget.car.transmissionType,
-                ),
+                _buildSpecBlock(Icons.settings, widget.car.transmissionType),
               ],
             ),
           ),
@@ -324,16 +307,13 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
   Widget _buildSpecBlock(IconData icon, String text) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 22,
-          color: AppColors.textLight,
-        ),
+        Icon(icon, size: 22, color: AppColors.textLight),
         const SizedBox(height: 5),
         Text(
           text,
-          style: AppTypography.body2Style(color: AppColors.textLight)
-              .copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.body2Style(
+            color: AppColors.textLight,
+          ).copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
       ],
@@ -361,8 +341,9 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             padding: const EdgeInsets.all(10),
             child: Text(
               'Overview',
-              style: AppTypography.subtitle1Style(color: AppColors.textPrimary)
-                  .copyWith(fontWeight: FontWeight.bold),
+              style: AppTypography.subtitle1Style(
+                color: AppColors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           const Divider(height: 1, color: AppColors.greyLight),
@@ -415,22 +396,20 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
   Widget _buildOverviewRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 24,
-          color: AppColors.textSecondary,
-        ),
+        Icon(icon, size: 24, color: AppColors.textSecondary),
         const SizedBox(width: 8),
         Text(
           '$label - ',
-          style: AppTypography.body2Style(color: AppColors.textSecondary)
-              .copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.body2Style(
+            color: AppColors.textSecondary,
+          ).copyWith(fontWeight: FontWeight.bold),
         ),
         Expanded(
           child: Text(
             value,
-            style: AppTypography.body2Style(color: AppColors.textSecondary)
-                .copyWith(fontWeight: FontWeight.bold),
+            style: AppTypography.body2Style(
+              color: AppColors.textSecondary,
+            ).copyWith(fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -462,8 +441,9 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             padding: const EdgeInsets.all(10),
             child: Text(
               'Description',
-              style: AppTypography.subtitle1Style(color: AppColors.textPrimary)
-                  .copyWith(fontWeight: FontWeight.bold),
+              style: AppTypography.subtitle1Style(
+                color: AppColors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           const Divider(height: 1, color: AppColors.greyLight),
@@ -558,12 +538,13 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Chat With Us',
-                              style: AppTypography.subtitle1Style(
-                                color: AppColors.textLight,
-                              ).copyWith(
-                                letterSpacing: 0.5,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style:
+                                  AppTypography.subtitle1Style(
+                                    color: AppColors.textLight,
+                                  ).copyWith(
+                                    letterSpacing: 0.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -573,9 +554,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
             const SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
-                color: _isLiked
-                    ? AppColors.primaryLight
-                    : AppColors.background,
+                color: _isLiked ? AppColors.primaryLight : AppColors.background,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -590,9 +569,7 @@ class _CarDetailScreenState extends State<CarDetailScreen> {
               child: IconButton(
                 icon: Icon(
                   _isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: _isLiked
-                      ? AppColors.primary
-                      : AppColors.primaryDark,
+                  color: _isLiked ? AppColors.primary : AppColors.primaryDark,
                   size: 32,
                 ),
                 onPressed: () {
