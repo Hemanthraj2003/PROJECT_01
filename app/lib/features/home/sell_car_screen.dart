@@ -292,7 +292,7 @@ class _SellCarScreenState extends State<SellCarScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40), // Add top padding instead of AppBar
+              const SizedBox(height: 8), // Reduced top padding
               _buildImageSection(),
               const SizedBox(height: 24),
               _buildVehicleDetailsSection(),
@@ -721,34 +721,54 @@ class _SellCarScreenState extends State<SellCarScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: 56,
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _submitCar,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.grey,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-        child: _isSubmitting
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                'Submit for Approval',
-                style: AppTypography.subtitle1Style(
-                  color: Colors.white,
-                ).copyWith(fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        gradient: _isSubmitting
+            ? null
+            : LinearGradient(
+                colors: [AppColors.primary, AppColors.accent2],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
+        color: _isSubmitting ? AppColors.grey : null,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _isSubmitting
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isSubmitting ? null : _submitCar,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: Colors.white.withOpacity(0.1),
+          highlightColor: Colors.white.withOpacity(0.2),
+          child: Center(
+            child: _isSubmitting
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    'Submit for Approval',
+                    style: AppTypography.subtitle1Style(
+                      color: Colors.white,
+                    ).copyWith(fontWeight: FontWeight.w600),
+                  ),
+          ),
+        ),
       ),
     );
   }
