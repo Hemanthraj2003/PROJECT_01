@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:io';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -43,6 +44,9 @@ class _SellCarScreenState extends State<SellCarScreen>
   // Images
   List<File> _images = [];
   bool _isSubmitting = false;
+
+  // Upload status
+  final ValueNotifier<String> _uploadStatus = ValueNotifier<String>('');
 
   // Car brands
   final List<String> _carBrands = [
@@ -101,6 +105,7 @@ class _SellCarScreenState extends State<SellCarScreen>
     _ownerNameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _uploadStatus.dispose();
     _carService.dispose();
     super.dispose();
   }
@@ -142,6 +147,31 @@ class _SellCarScreenState extends State<SellCarScreen>
     });
   }
 
+  Future<File?> _compressImage(File file) async {
+    try {
+      final filePath = file.absolute.path;
+      final lastIndex = filePath.lastIndexOf('.');
+      final splitPath = filePath.substring(0, lastIndex);
+      final outPath = '${splitPath}_compressed${filePath.substring(lastIndex)}';
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path,
+        outPath,
+        quality: 70,
+        minWidth: 1024,
+        minHeight: 1024,
+      );
+
+      if (result != null) {
+        return File(result.path);
+      }
+      return null;
+    } catch (e) {
+      print('Error compressing image: $e');
+      return file; // Return original if compression fails
+    }
+  }
+
   bool _validateForm() {
     if (_images.isEmpty) {
       _showSnackBar('Please add at least one image', isError: true);
@@ -157,17 +187,40 @@ class _SellCarScreenState extends State<SellCarScreen>
       _isSubmitting = true;
     });
 
+    // Show upload dialog
+    if (!mounted) return;
+    _showUploadDialog();
+
     try {
       final user = Provider.of<UserProvider>(context, listen: false).user;
       if (user == null) {
         throw Exception('Please login to sell a car');
       }
 
-      // Upload images first
+      // Compress and upload images
       List<String> imageUrls = [];
       try {
-        imageUrls = await _carService.uploadImages(_images);
+        // Update dialog with compression status
+        _updateUploadDialog('Compressing images...');
+
+        List<File> compressedImages = [];
+        for (int i = 0; i < _images.length; i++) {
+          _updateUploadDialog(
+            'Compressing image ${i + 1} of ${_images.length}...',
+          );
+          final compressed = await _compressImage(_images[i]);
+          if (compressed != null) {
+            compressedImages.add(compressed);
+          }
+        }
+
+        // Update dialog with upload status
+        _updateUploadDialog('Uploading images...');
+        imageUrls = await _carService.uploadImages(compressedImages);
       } catch (uploadError) {
+        // Close upload dialog
+        if (mounted) Navigator.of(context).pop();
+
         // Show specific error for upload failure
         _showSnackBar(
           'Image upload failed: ${uploadError.toString()}. Please try again or contact support.',
@@ -179,6 +232,9 @@ class _SellCarScreenState extends State<SellCarScreen>
       if (imageUrls.isEmpty) {
         throw Exception('No images were uploaded successfully');
       }
+
+      // Update dialog with submission status
+      _updateUploadDialog('Submitting car details...');
 
       // Prepare car data
       final carData = {
@@ -204,9 +260,16 @@ class _SellCarScreenState extends State<SellCarScreen>
       await _carService.postCarForApproval(carData);
 
       if (mounted) {
+        // Close upload dialog
+        Navigator.of(context).pop();
+
+        // Show success dialog
         _showSuccessDialog();
       }
     } catch (e) {
+      // Close upload dialog
+      if (mounted) Navigator.of(context).pop();
+
       _showSnackBar('Failed to submit: ${e.toString()}', isError: true);
     } finally {
       if (mounted) {
@@ -218,6 +281,25 @@ class _SellCarScreenState extends State<SellCarScreen>
   }
 
   void _showSuccessDialog() {
+    // Clear form
+    _formKey.currentState?.reset();
+    _modelController.clear();
+    _registrationController.clear();
+    _priceController.clear();
+    _kmController.clear();
+    _descriptionController.clear();
+    _ownerNameController.clear();
+    _phoneController.clear();
+    _locationController.clear();
+    setState(() {
+      _selectedBrand = null;
+      _selectedYear = null;
+      _fuelType = 'Petrol';
+      _transmission = 'Manual';
+      _ownerNumber = '1st Owner';
+      _images = [];
+    });
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -252,7 +334,6 @@ class _SellCarScreenState extends State<SellCarScreen>
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop(); // Close dialog
-                    Navigator.of(context).pop(); // Go back to home
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -272,6 +353,64 @@ class _SellCarScreenState extends State<SellCarScreen>
         ),
       ),
     );
+  }
+
+  void _showUploadDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent2],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.cloud_upload,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text('Uploading Car', style: AppTypography.h3Style()),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<String>(
+                  valueListenable: _uploadStatus,
+                  builder: (context, status, child) {
+                    return Text(
+                      status,
+                      style: AppTypography.body1Style(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                const CircularProgressIndicator(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateUploadDialog(String status) {
+    _uploadStatus.value = status;
   }
 
   void _showSnackBar(String message, {bool isError = false}) {

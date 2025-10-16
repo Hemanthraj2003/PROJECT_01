@@ -1,10 +1,10 @@
 class AppConstants {
   // API URLs
   static const String prodApi = 'https://friendscars.vercel.app/api';
-  static const String devApi = 'http://192.168.0.106:5000';
+  static const String devApi = 'http://192.168.0.117:3000/api';
 
   // Use this to switch between dev and prod
-  static const String baseUrl = prodApi;
+  static const String baseUrl = devApi;
 
   // API Endpoints
   static const String carsEndpoint = '/cars';
